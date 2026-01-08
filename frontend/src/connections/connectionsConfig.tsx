@@ -16,7 +16,7 @@ export async function StandardFunction({
             const res = await api.get(route, {headers:{"whitchFunction":whitchFunction}});
             console.log(res.data);
             if (res.data.msg == "incorrectUserType") {
-                window.location.href = "/incorrectusertype"; 
+                window.location.href = "/unauthorized"; 
                 return false;
             }
             return res.data;

@@ -1,11 +1,31 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { SignupConnection } from "../../connections/credentialConnections";
 
 export default function SignupScreen() {
     const [name, setName] = useState("");
     const [password, setPassword] = useState("");
+    const navigate = useNavigate();
     const customer = "customer";
     const seller = "seller";
+
+    async function handleSignup(role: string) {
+        // O backend espera { name, password, seller: "seller" } para vendedor
+        // ou apenas { name, password } para cliente (usa "customer" como padrão)
+        const body = role === "seller" 
+            ? { name, password, seller: role }
+            : { name, password };
+        
+        const res = await SignupConnection({ body });
+        
+        if (res && res.ok) {
+            // Após signup bem-sucedido, redireciona para login
+            navigate("/login");
+        } else {
+            // Mantém o comportamento atual se houver erro
+            console.log("Erro no cadastro");
+        }
+    }
 
     return (
         <main className="page">
@@ -40,19 +60,28 @@ export default function SignupScreen() {
                         <button
                             type="button"
                             className="btn btn-primary"
-                            onClick={() => SignupConnection({ body: { name, password, customer } })}
+                            onClick={() => handleSignup(customer)}
                         >
                             Cadastrar como cliente
                         </button>
                         <button
                             type="button"
                             className="btn btn-secondary"
-                            onClick={() => SignupConnection({ body: { name, password, seller } })}
+                            onClick={() => handleSignup(seller)}
                         >
                             Cadastrar como vendedor
                         </button>
                     </div>
                 </form>
+
+                <div style={{ textAlign: "center", marginTop: 16 }}>
+                    <small style={{ color: "#9ca3af" }}>
+                        Já tem uma conta?{" "}
+                        <Link to="/login" style={{ color: "#60a5fa", textDecoration: "none" }}>
+                            Entrar
+                        </Link>
+                    </small>
+                </div>
             </section>
         </main>
     );

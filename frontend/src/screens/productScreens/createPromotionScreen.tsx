@@ -25,7 +25,7 @@ export default function CreatePromotionScreen() {
                 <section className="card stack">
                     <form className="stack" onSubmit={(e) => {
                         e.preventDefault();
-                        navigate(`/createpromotionscreen?bySearch=true&word=${encodeURIComponent(textAreaSearchedWord)}`);
+                        navigate(`/promotions?bySearch=true&word=${encodeURIComponent(textAreaSearchedWord)}`);
                     }}>
                         <label className="stack" style={{ gap: 4 }}>
                             <span>Buscar produto</span>

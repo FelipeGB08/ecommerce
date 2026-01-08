@@ -9,7 +9,7 @@ export function StoreProductComponent(
     //ele navega para a página de detalhes correta pelo seu Id que é um parâmetro de URL
     //caso o botão de adicionar ao carrinho for apertado ele adiciona o item pelo seu Id
     <>
-    <Link to={`/productdetails/${id}`}>
+    <Link to={`/products/${id}`}>
       <div>
         <h1>{name}</h1>
         <p>{price}</p>  
