@@ -12,12 +12,26 @@ export default function StoreScreen({}:{}) {
 
 
     return(
-        <>
-            <SearchProductComponent></SearchProductComponent>
-            <StoreProductsContainer
-                searched={bySearch && searchedWord.length > 0}
-                searchedWord={searchedWord}
-            />
-        </>
-    )
+        <main className="page">
+            <section className="stack" aria-labelledby="store-title">
+                <header className="stack" style={{ gap: 4 }}>
+                    <h1 id="store-title">Loja</h1>
+                    {bySearch && searchedWord.length > 0 && (
+                        <p>Resultados para “{searchedWord}”.</p>
+                    )}
+                </header>
+
+                <section className="card stack">
+                    <SearchProductComponent />
+                </section>
+
+                <section className="grid">
+                    <StoreProductsContainer
+                        searched={bySearch && searchedWord.length > 0}
+                        searchedWord={searchedWord}
+                    />
+                </section>
+            </section>
+        </main>
+    );
 }
