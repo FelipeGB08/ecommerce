@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 // Importe as novas conexões aqui
 import { GetUserCartConnection, UpdateCartQuantityConnection, RemoveFromCartConnection } from "../../connections/productConnection";
+import { CreatePaymentConnection } from "../../connections/productConnection";
 
 export default function CartScreen() {
     const [cartItems, setCartItems] = useState<any[]>([]);
@@ -48,6 +49,28 @@ export default function CartScreen() {
         await RemoveFromCartConnection({ 
             body: { productId: productId } 
         });
+    }
+
+    async function handleCheckout() {
+        if (cartItems.length === 0) return;
+
+        setLoading(true);
+        
+        // 1. Pede pro PHP criar o pedido
+        const res = await CreatePaymentConnection({ body: {} });
+
+        // 2. Se o PHP devolver o link...
+        if (res && res.ok && res.paymentUrl) {
+            
+            // ✅ CORRETO: "Tchau site, olá AbacatePay"
+            // Isso faz o navegador sair da sua página e abrir a cobrança
+            window.location.href = res.paymentUrl; 
+            
+        } else {
+            alert("Erro: " + (res.msg || "Tente novamente"));
+        }
+        
+        setLoading(false);
     }
 
     // Calcula o total do carrinho
@@ -130,8 +153,13 @@ export default function CartScreen() {
                             <span>Total:</span>
                             <span>R$ {cartTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <button className="btn btn-primary" style={{ marginTop: 10 }}>
-                            Finalizar Compra
+                        <button 
+                            className="btn btn-primary" 
+                            style={{ marginTop: 10 }}
+                            onClick={handleCheckout} 
+                            disabled={loading}
+                        >
+                            {loading ? "Gerando Pix..." : "Finalizar Compra com Pix"}
                         </button>
                     </footer>
                 )}

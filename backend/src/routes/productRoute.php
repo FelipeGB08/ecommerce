@@ -62,6 +62,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         case 'removeFromCart':
             echo json_encode($productController->removeFromCartController());
             break;
+
+        case 'createPayment':
+            echo json_encode($productController->createPaymentController());
+            break;
             
         default:
             echo json_encode(["ok" => false, "msg" => "Função inválida"]);

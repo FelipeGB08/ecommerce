@@ -210,5 +210,83 @@ class ProductController {
         return ["ok" => true, "msg" => $cart];
     }
 
+// Função para criar o pedido e gerar o pagamento
+    function createPaymentController() {
+        $userId = $_SESSION["userId"] ?? null;
+        
+        // Se quiser testar sem estar logado, descomente a linha abaixo (mas cuidado em produção!)
+        // $userId = "ID_DO_USUARIO_NO_MONGO"; 
+
+        if (!$userId) return ["ok" => false, "msg" => "Usuário não logado"];
+
+        $productModel = new ProductModel($this->db);
+        $cartItems = $productModel->getUserCartModel($userId); // Pega itens do banco
+        
+        if (empty($cartItems)) return ["ok" => false, "msg" => "Carrinho vazio"];
+
+        // 1. Preparar produtos para o formato da AbacatePay
+        $productsPayload = [];
+        foreach ($cartItems as $item) {
+            $productsPayload[] = [
+                "externalId" => (string)$item['productId'], // ID do seu banco
+                "name" => $item['name'],
+                "quantity" => $item['quantity'] ?? 1,
+                "price" => (int)($item['price'] * 100), // Converte R$ 10,00 para 1000 centavos
+                "description" => "Produto da loja"
+            ];
+        }
+
+        // 2. Configuração da Requisição
+        $url = "https://api.abacatepay.com/v1/billing/create";
+        
+        // IMPORTANTE: Coloque sua chave de DESENVOLVIMENTO aqui
+        $apiKey = "abc_dev_D2KpAeHbH2NrnzHFpSmeuUak"; 
+
+        $data = [
+            "frequency" => "ONE_TIME",
+            "methods" => ["PIX"],
+            "products" => $productsPayload,
+            "returnUrl" => "http://localhost:5173/cart",
+            "completionUrl" => "http://localhost:5173/cart",
+            
+            // DADOS DO CLIENTE CORRIGIDOS
+            "customer" => [
+                "name" => "Cliente Teste", 
+                "cellphone" => "11999999999", // Apenas números, sem parênteses ou traços
+                "email" => "cliente@teste.com",
+                "taxId" => "10102237980" // ESTE É UM CPF VÁLIDO (Gerado para teste)
+            ]
+        ];
+
+        // 3. Envio via cURL (igual ao seu exemplo)
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer $apiKey",
+            "Content-Type: application/json"
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $result = json_decode($response, true);
+
+        // 4. Retorno para o Frontend
+        if ($httpCode === 200 || $httpCode === 201) {
+            return [
+                "ok" => true, 
+                "paymentUrl" => $result['data']['url'] // A URL que o React vai abrir
+            ];
+        } else {
+            return [
+                "ok" => false, 
+                "msg" => "Erro na API", 
+                "debug" => $result // Ajuda a ver o erro no console
+            ];
+        }
+    }
 }
 ?>

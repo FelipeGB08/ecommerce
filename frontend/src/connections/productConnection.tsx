@@ -89,3 +89,12 @@ export function RemoveFromCartConnection({ body }: { body: Record<string, any> }
         body: body
     });
 }
+
+export function CreatePaymentConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "createPayment",
+        body: body
+    });
+}
