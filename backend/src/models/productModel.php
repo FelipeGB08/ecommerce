@@ -198,7 +198,36 @@ class ProductModel {
             return [];
         }
     }
-    // Busca os produtos do carrinho de um usuário específico
+    
+    // Cria o pedido com status PENDENTE
+    function createOrderModel($userId, $products, $totalPrice, $billingId) {
+        try {
+            $response = $this->db->orders->insertOne([
+                "userId" => $userId,
+                "products" => $products, // Salva a lista de itens
+                "totalPrice" => $totalPrice,
+                "status" => "PENDING", // Começa como pendente
+                "abacateBillingId" => $billingId, // O ID que vem do AbacatePay
+                "createdAt" => new MongoDB\BSON\UTCDateTime()
+            ]);
+            return $response->getInsertedCount() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    // Atualiza o pedido para PAGO
+    function approveOrderModel($billingId) {
+        try {
+            $result = $this->db->orders->updateOne(
+                ["abacateBillingId" => $billingId],
+                ['$set' => ["status" => "PAID", "paidAt" => new MongoDB\BSON\UTCDateTime()]]
+            );
+            return $result->getModifiedCount() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
 }
 ?>
 

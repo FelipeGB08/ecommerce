@@ -1,0 +1,374 @@
+Array
+(
+    [id] => evt_0gYkJHeF0j15t0gKF66cygXD
+    [event] => billing.paid
+    [data] => Array
+        (
+            [billing] => Array
+                (
+                    [id] => bill_m12McH0CnadNNpWT4ahNbJbD
+                    [amount] => 100
+                    [customer] => Array
+                        (
+                            [id] => cust_6pngx4G14PggqZeSdHdCU1F3
+                            [metadata] => Array
+                                (
+                                    [name] => Cliente Teste
+                                    [cellphone] => 11999999999
+                                    [taxId] => 10102237980
+                                    [email] => cliente@teste.com
+                                    [zipCode] => 
+                                )
+
+                        )
+
+                    [frequency] => ONE_TIME
+                    [kind] => Array
+                        (
+                            [0] => PIX
+                        )
+
+                    [status] => PAID
+                    [products] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => prod_BN1FjcLG3pz3fZrkT1g2sdAt
+                                    [externalId] => 69612892bf8ff0cc7c0a1298
+                                    [quantity] => 1
+                                    [price] => 100
+                                    [name] => teste_de_compra
+                                )
+
+                        )
+
+                    [paidAmount] => 100
+                    [couponsUsed] => Array
+                        (
+                        )
+
+                )
+
+            [payment] => Array
+                (
+                    [amount] => 100
+                    [fee] => 80
+                    [method] => PIX
+                )
+
+        )
+
+    [devMode] => 1
+)
+Array
+(
+    [id] => evt_xs50L6pF25nJSx4whDuP4Lyc
+    [event] => billing.paid
+    [data] => Array
+        (
+            [billing] => Array
+                (
+                    [id] => bill_4FJuMHAFKU1MxH1CeDXzy4Qs
+                    [amount] => 100
+                    [customer] => Array
+                        (
+                            [id] => cust_6pngx4G14PggqZeSdHdCU1F3
+                            [metadata] => Array
+                                (
+                                    [name] => Cliente Teste
+                                    [cellphone] => 11999999999
+                                    [taxId] => 10102237980
+                                    [email] => cliente@teste.com
+                                    [zipCode] => 
+                                )
+
+                        )
+
+                    [frequency] => ONE_TIME
+                    [kind] => Array
+                        (
+                            [0] => PIX
+                        )
+
+                    [status] => PAID
+                    [products] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => prod_BN1FjcLG3pz3fZrkT1g2sdAt
+                                    [externalId] => 69612892bf8ff0cc7c0a1298
+                                    [quantity] => 1
+                                    [price] => 100
+                                    [name] => teste_de_compra
+                                )
+
+                        )
+
+                    [paidAmount] => 100
+                    [couponsUsed] => Array
+                        (
+                        )
+
+                )
+
+            [payment] => Array
+                (
+                    [amount] => 100
+                    [fee] => 80
+                    [method] => PIX
+                )
+
+        )
+
+    [devMode] => 1
+)
+Array
+(
+    [id] => evt_fjzMwYjT32HhQWDte5Dw1WmJ
+    [event] => billing.paid
+    [data] => Array
+        (
+            [billing] => Array
+                (
+                    [id] => bill_BTTd0MPBabe4qHfWYbPaJuZg
+                    [amount] => 100
+                    [customer] => Array
+                        (
+                            [id] => cust_6pngx4G14PggqZeSdHdCU1F3
+                            [metadata] => Array
+                                (
+                                    [name] => Cliente Teste
+                                    [cellphone] => 11999999999
+                                    [taxId] => 10102237980
+                                    [email] => cliente@teste.com
+                                    [zipCode] => 
+                                )
+
+                        )
+
+                    [frequency] => ONE_TIME
+                    [kind] => Array
+                        (
+                            [0] => PIX
+                        )
+
+                    [status] => PAID
+                    [products] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => prod_BN1FjcLG3pz3fZrkT1g2sdAt
+                                    [externalId] => 69612892bf8ff0cc7c0a1298
+                                    [quantity] => 1
+                                    [price] => 100
+                                    [name] => teste_de_compra
+                                )
+
+                        )
+
+                    [paidAmount] => 100
+                    [couponsUsed] => Array
+                        (
+                        )
+
+                )
+
+            [payment] => Array
+                (
+                    [amount] => 100
+                    [fee] => 80
+                    [method] => PIX
+                )
+
+        )
+
+    [devMode] => 1
+)
+Array
+(
+    [id] => evt_xWHjYcsPUMkSJDxpTEmMMpgg
+    [event] => billing.paid
+    [data] => Array
+        (
+            [billing] => Array
+                (
+                    [id] => bill_eqydhPTwCEmDGCgesuAgquCA
+                    [amount] => 100
+                    [customer] => Array
+                        (
+                            [id] => cust_6pngx4G14PggqZeSdHdCU1F3
+                            [metadata] => Array
+                                (
+                                    [name] => Cliente Teste
+                                    [cellphone] => 11999999999
+                                    [taxId] => 10102237980
+                                    [email] => cliente@teste.com
+                                    [zipCode] => 
+                                )
+
+                        )
+
+                    [frequency] => ONE_TIME
+                    [kind] => Array
+                        (
+                            [0] => PIX
+                        )
+
+                    [status] => PAID
+                    [products] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => prod_BN1FjcLG3pz3fZrkT1g2sdAt
+                                    [externalId] => 69612892bf8ff0cc7c0a1298
+                                    [quantity] => 1
+                                    [price] => 100
+                                    [name] => teste_de_compra
+                                )
+
+                        )
+
+                    [paidAmount] => 100
+                    [couponsUsed] => Array
+                        (
+                        )
+
+                )
+
+            [payment] => Array
+                (
+                    [amount] => 100
+                    [fee] => 80
+                    [method] => PIX
+                )
+
+        )
+
+    [devMode] => 1
+)
+Array
+(
+    [id] => evt_1Fd3GuXYYzaK4tUq4mSmRFuD
+    [event] => billing.paid
+    [data] => Array
+        (
+            [billing] => Array
+                (
+                    [id] => bill_qgXQ4cbSFXgwjmGcZRCWxNTt
+                    [amount] => 2500
+                    [customer] => Array
+                        (
+                            [id] => cust_6pngx4G14PggqZeSdHdCU1F3
+                            [metadata] => Array
+                                (
+                                    [name] => Cliente Teste
+                                    [cellphone] => 11999999999
+                                    [taxId] => 10102237980
+                                    [email] => cliente@teste.com
+                                    [zipCode] => 
+                                )
+
+                        )
+
+                    [frequency] => ONE_TIME
+                    [kind] => Array
+                        (
+                            [0] => PIX
+                        )
+
+                    [status] => PAID
+                    [products] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => prod_qhyncdsudb5qDdceetPxYF05
+                                    [externalId] => 6960486e62da5f0d40071714
+                                    [quantity] => 1
+                                    [price] => 2500
+                                    [name] => TESTEDEFAULT2
+                                )
+
+                        )
+
+                    [paidAmount] => 2500
+                    [couponsUsed] => Array
+                        (
+                        )
+
+                )
+
+            [payment] => Array
+                (
+                    [amount] => 2500
+                    [fee] => 80
+                    [method] => PIX
+                )
+
+        )
+
+    [devMode] => 1
+)
+Array
+(
+    [id] => evt_eEF3stp3W6GsgFsdNtNx3X1p
+    [event] => billing.paid
+    [data] => Array
+        (
+            [billing] => Array
+                (
+                    [id] => bill_dYupEHQytMMc0tn5RXH43Nza
+                    [amount] => 2500
+                    [customer] => Array
+                        (
+                            [id] => cust_6pngx4G14PggqZeSdHdCU1F3
+                            [metadata] => Array
+                                (
+                                    [name] => Cliente Teste
+                                    [cellphone] => 11999999999
+                                    [taxId] => 10102237980
+                                    [email] => cliente@teste.com
+                                    [zipCode] => 
+                                )
+
+                        )
+
+                    [frequency] => ONE_TIME
+                    [kind] => Array
+                        (
+                            [0] => PIX
+                        )
+
+                    [status] => PAID
+                    [products] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => prod_qhyncdsudb5qDdceetPxYF05
+                                    [externalId] => 6960486e62da5f0d40071714
+                                    [quantity] => 1
+                                    [price] => 2500
+                                    [name] => TESTEDEFAULT2
+                                )
+
+                        )
+
+                    [paidAmount] => 2500
+                    [couponsUsed] => Array
+                        (
+                        )
+
+                )
+
+            [payment] => Array
+                (
+                    [amount] => 2500
+                    [fee] => 80
+                    [method] => PIX
+                )
+
+        )
+
+    [devMode] => 1
+)
+18:29:33 - Recebi pagamento para a cobrança: bill_eHgKNKEFUNh0qcQUEXuD33FP
+18:29:33 - SUCESSO: Pedido bill_eHgKNKEFUNh0qcQUEXuD33FP atualizado para PAID.

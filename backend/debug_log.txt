@@ -1,0 +1,73 @@
+[2026-01-09 18:23:34] ---- INÍCIO DA REQUISIÇÃO ----
+[2026-01-09 18:23:34] Tentando conectar ao Mongo...
+[2026-01-09 18:23:34] Conexão com Banco OK!
+[2026-01-09 18:23:34] Evento recebido: billing.paid
+[2026-01-09 18:23:34] Tentando aprovar pedido com Billing ID: 
+[2026-01-09 18:23:34] FALHA: O Model retornou false ao tentar atualizar.
+[2026-01-09 18:27:42] ---- NOVA TENTATIVA ----
+[2026-01-09 18:27:42] JSON COMPLETO RECEBIDO:
+Array
+(
+    [id] => evt_rfqZb0sHLsdYSFbAy4ErNaPB
+    [event] => billing.paid
+    [data] => Array
+        (
+            [billing] => Array
+                (
+                    [id] => bill_3um4ba4wpxPBU2fabEcaymFC
+                    [amount] => 100
+                    [customer] => Array
+                        (
+                            [id] => cust_6pngx4G14PggqZeSdHdCU1F3
+                            [metadata] => Array
+                                (
+                                    [name] => Cliente Teste
+                                    [cellphone] => 11999999999
+                                    [taxId] => 10102237980
+                                    [email] => cliente@teste.com
+                                    [zipCode] => 
+                                )
+
+                        )
+
+                    [frequency] => ONE_TIME
+                    [kind] => Array
+                        (
+                            [0] => PIX
+                        )
+
+                    [status] => PAID
+                    [products] => Array
+                        (
+                            [0] => Array
+                                (
+                                    [id] => prod_BN1FjcLG3pz3fZrkT1g2sdAt
+                                    [externalId] => 69612892bf8ff0cc7c0a1298
+                                    [quantity] => 1
+                                    [price] => 100
+                                    [name] => teste_de_compra
+                                )
+
+                        )
+
+                    [paidAmount] => 100
+                    [couponsUsed] => Array
+                        (
+                        )
+
+                )
+
+            [payment] => Array
+                (
+                    [amount] => 100
+                    [fee] => 80
+                    [method] => PIX
+                )
+
+        )
+
+    [devMode] => 1
+)
+
+[2026-01-09 18:27:42] ID Capturado: evt_rfqZb0sHLsdYSFbAy4ErNaPB
+[2026-01-09 18:27:42] FALHA: ID existe (evt_rfqZb0sHLsdYSFbAy4ErNaPB), mas o banco não achou esse pedido.

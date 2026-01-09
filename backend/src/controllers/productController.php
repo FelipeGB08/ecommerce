@@ -276,15 +276,25 @@ class ProductController {
 
         // 4. Retorno para o Frontend
         if ($httpCode === 200 || $httpCode === 201) {
+        
+            $billingId = $result['data']['id']; // O ID da cobrança (ex: bill_123...)
+            $paymentUrl = $result['data']['url'];
+
+            // CALCULA O TOTAL DO PEDIDO (em reais)
+            $totalPrice = 0;
+            foreach ($cartItems as $item) {
+                $totalPrice += ($item['price'] * ($item['quantity'] ?? 1));
+            }
+
+            // SALVA O PEDIDO NO BANCO COMO 'PENDENTE'
+            $productModel->createOrderModel($userId, $cartItems, $totalPrice, $billingId);
+            
+            // (Opcional) Limpa o carrinho depois de criar o pedido
+            // $productModel->clearCartModel($userId);
+
             return [
                 "ok" => true, 
-                "paymentUrl" => $result['data']['url'] // A URL que o React vai abrir
-            ];
-        } else {
-            return [
-                "ok" => false, 
-                "msg" => "Erro na API", 
-                "debug" => $result // Ajuda a ver o erro no console
+                "paymentUrl" => $paymentUrl
             ];
         }
     }
