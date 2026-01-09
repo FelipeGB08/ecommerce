@@ -62,3 +62,30 @@ export function SellerGetStoreSearchedProductsConnection({ body }: { body: Recor
         body: body
     });
 }
+
+export function GetUserCartConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "getUserCart",
+        body: body
+    });
+}
+
+export function UpdateCartQuantityConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "updateCartQuantity",
+        body: body
+    });
+}
+
+export function RemoveFromCartConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "removeFromCart",
+        body: body
+    });
+}

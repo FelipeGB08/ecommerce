@@ -10,6 +10,9 @@ export default function ProductDatailsScreen() {
   const [details, setDetails] = useState<any>({});
   const [comment, setComment] = useState("");
 
+  // ID temporário para teste de carrinho
+  const userId = "123"; 
+
   useEffect(() => {
       //faz uma requisição para pegar os detalhes
       async function showProductDetails() {
@@ -20,7 +23,7 @@ export default function ProductDatailsScreen() {
         }
       }
       showProductDetails();
-  }, []);
+  }, [productId]); // Adicionado productId como dependência por boa prática
 
   async function handleSendComment() {
       //envia comentário para o produto
@@ -36,6 +39,22 @@ export default function ProductDatailsScreen() {
       }
   }
 
+  // Função para lidar com a adição ao carrinho
+  async function handleAddToCart() {
+    const res = await AddProductCartConnection({ 
+      body: { 
+        "productId": productId, 
+        "userId": userId // Enviando o userId necessário para o seu Controller
+      } 
+    });
+
+    if (res && res.ok) {
+      alert("Produto adicionado ao carrinho!");
+    } else {
+      alert("Erro ao adicionar ao carrinho.");
+    }
+  }
+
   return(
     <main className="page">
       <section className="stack" aria-labelledby="product-title">
@@ -43,6 +62,9 @@ export default function ProductDatailsScreen() {
           <div className="stack" style={{ gap: 4 }}>
             <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>Detalhes do produto</p>
             <h1 id="product-title">{details.name}</h1>
+            <p style={{ fontSize: 24, fontWeight: 'bold', color: '#10b981', margin: '8px 0' }}>
+              {details.price ? `R$ ${Number(details.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Carregando preço...'}
+            </p>
           </div>
 
           <div className="stack" style={{ gap: 12 }}>
@@ -51,7 +73,7 @@ export default function ProductDatailsScreen() {
               alt="Adicionar ao carrinho"
               onClick={(e) => {
                 e.preventDefault();
-                AddProductCartConnection({ body: { "productId": productId } });
+                handleAddToCart(); // Chamando a nova função com validação
               }}
               style={{ cursor: 'pointer', maxWidth: 64 }}
             />

@@ -6,6 +6,8 @@ import StoreScreen from './screens/storeScreens/storeScreen';
 import ProductDatailsScreen from './screens/productScreens/productDatailsScreen';
 import CreatePromotionScreen from './screens/productScreens/createPromotionScreen';
 import IncorrectUserType from './screens/errorScreens/incorrectUserType';
+// Importação da nova tela de carrinho
+import CartScreen from './screens/cartScreens/cartScreen'; 
 
 // Componente para redirecionar rotas antigas de produtos
 function RedirectProductDetails() {
@@ -21,6 +23,9 @@ export default function App() {
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/signup" element={<SignupScreen />} />
       <Route path="/store" element={<StoreScreen />} />
+      
+      {/* Rota do carrinho */}
+      <Route path="/cart" element={<CartScreen />} />
       
       {/* Rotas de produtos - novas (mais limpas) */}
       <Route path="/products/:productId" element={<ProductDatailsScreen />} />

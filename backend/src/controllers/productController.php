@@ -67,6 +67,37 @@ class ProductController {
         ];
     }
 
+    function updateCartQuantityController() {
+        $req = json_decode(file_get_contents("php://input"), true);
+        $body = $req["body"] ?? null;
+        $userId = $_SESSION["userId"] ?? null;
+
+        if (!$userId) return ["ok" => false, "msg" => "Usuário não logado"];
+
+        $productId = $body["productId"] ?? null;
+        $quantity = $body["quantity"] ?? null;
+
+        $productModel = new ProductModel($this->db);
+        $ok = $productModel->updateCartQuantityModel($userId, $productId, $quantity);
+
+        return ["ok" => $ok];
+    }
+
+    function removeFromCartController() {
+        $req = json_decode(file_get_contents("php://input"), true);
+        $body = $req["body"] ?? null;
+        $userId = $_SESSION["userId"] ?? null;
+
+        if (!$userId) return ["ok" => false, "msg" => "Usuário não logado"];
+
+        $productId = $body["productId"] ?? null;
+
+        $productModel = new ProductModel($this->db);
+        $ok = $productModel->removeFromCartModel($userId, $productId);
+
+        return ["ok" => $ok];
+    }
+    
     function getProductDetailsController(){
         $req = json_decode(file_get_contents("php://input"), true);
         $body = $req["body"] ?? null;
@@ -158,5 +189,26 @@ class ProductController {
 
         return ["ok" => false, "msg" => "Produto não encontrado"];
     }
+    // Dentro da classe ProductController
+       
+  // Mantendo seu padrão sem a palavra "public"
+    public function getUserCartController() {
+        // Em vez de ler do JSON enviado pelo React, lemos da Sessão do PHP
+        // Isso garante que pegamos o ID de quem está realmente logado
+        $userId = $_SESSION["userId"] ?? null;
+
+        // Se não houver sessão ativa, retornamos erro
+        if (!$userId) {
+            return ["ok" => false, "msg" => "Usuário não está logado"];
+        }
+
+        $productModel = new ProductModel($this->db);
+        
+        // A busca no banco continua igual
+        $cart = $productModel->getUserCartModel($userId);
+        
+        return ["ok" => true, "msg" => $cart];
+    }
+
 }
 ?>

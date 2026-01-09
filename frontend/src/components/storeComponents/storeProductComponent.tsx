@@ -2,17 +2,17 @@ import { Link } from "react-router-dom";
 import { AddProductCartConnection } from "../../connections/productConnection";
 
 export function StoreProductComponent(
-  { id, name, price }: { id: number; name: string; price: number }
+  { id, name, price }: { id: string; name: string; price: number }
 ) {
   return (
-    //componente que representa cada item, indo para a página de detalhes do mesmo caso tenha seu componente clicado
-    //ele navega para a página de detalhes correta pelo seu Id que é um parâmetro de URL
-    //caso o botão de adicionar ao carrinho for apertado ele adiciona o item pelo seu Id
     <>
     <Link to={`/products/${id}`}>
       <div>
         <h1>{name}</h1>
-        <p>{price}</p>  
+        {/* Usamos o toLocaleString para garantir a vírgula e o R$ sem mudar o estilo */}
+        <p>
+          {Number(price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+        </p>  
       </div>
       </Link>
       <img

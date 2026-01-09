@@ -46,10 +46,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         case 'getStoreSearchedProducts':
             echo json_encode($productController->getStoreSearchedProductsController());
             break;
+
         case 'sellerGetStoreSearchedProducts':
             echo json_encode($productController->sellerGetStoreSearchedProductsController());
             break;
 
+        case 'getUserCart':
+            echo json_encode($productController->getUserCartController());
+            break;
+
+        case 'updateCartQuantity':
+            echo json_encode($productController->updateCartQuantityController());
+            break;
+
+        case 'removeFromCart':
+            echo json_encode($productController->removeFromCartController());
+            break;
+            
         default:
             echo json_encode(["ok" => false, "msg" => "Função inválida"]);
     }
