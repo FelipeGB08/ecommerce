@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GetUserCartConnection, UpdateCartQuantityConnection, RemoveFromCartConnection } from "../../connections/productConnection";
 import { CreatePaymentConnection } from "../../connections/productConnection";
-import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShoppingCart } from "lucide-react";
+import { GetUserInfoConnection } from "../../connections/credentialConnections";
+import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShoppingCart, User, ChevronUp } from "lucide-react";
 
 export default function CartScreen() {
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState<string | null>(null);
     const navigate = useNavigate();
 
     // Função para recarregar o carrinho
@@ -21,6 +23,23 @@ export default function CartScreen() {
 
     useEffect(() => {
         loadCart();
+    }, []);
+
+    // Verificar tipo de usuário
+    useEffect(() => {
+        async function checkUserRole() {
+            try {
+                const res = await GetUserInfoConnection();
+                if (res && res.ok) {
+                    setUserRole(res.role || "customer");
+                } else {
+                    setUserRole("customer");
+                }
+            } catch (error) {
+                setUserRole("customer");
+            }
+        }
+        checkUserRole();
     }, []);
 
     // Lógica para alterar quantidade
@@ -105,14 +124,26 @@ export default function CartScreen() {
                             <h1 className="text-2xl font-bold text-gray-900">Ecommerce</h1>
                         </Link>
 
-                        {/* Botão Voltar */}
-                        <Link 
-                            to="/store" 
-                            className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
-                            <span className="hidden sm:block text-sm font-medium">Continuar Comprando</span>
-                        </Link>
+                        {/* Botões de Ação */}
+                        <div className="flex items-center gap-4">
+                            {/* Botão para Vendedores - Criar Produto */}
+                            {userRole === "seller" && (
+                                <Link 
+                                    to="/products/create" 
+                                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Adicionar Produto</span>
+                                </Link>
+                            )}
+                            <Link 
+                                to="/store" 
+                                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                                <span className="hidden sm:block text-sm font-medium">Continuar Comprando</span>
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </header>

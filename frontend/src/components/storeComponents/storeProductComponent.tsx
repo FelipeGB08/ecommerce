@@ -4,7 +4,7 @@ import { AddProductCartConnection } from "../../connections/productConnection";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 
 export function StoreProductComponent(
-  { id, name, price }: { id: string; name: string; price: number }
+  { id, name, price, coverImage }: { id: string; name: string; price: number; coverImage?: string }
 ) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
@@ -32,8 +32,8 @@ export function StoreProductComponent(
     setIsFavorite(!isFavorite);
   }
 
-  // Geração de imagem placeholder baseada no nome
-  const imageUrl = `https://via.placeholder.com/300x300?text=${encodeURIComponent(name.substring(0, 10))}`;
+  // Usar imagem de capa se disponível, senão usar placeholder
+  const imageUrl = coverImage || `https://via.placeholder.com/300x300?text=${encodeURIComponent(name.substring(0, 10))}`;
 
   return (
     <Link to={`/products/${id}`} className="group">

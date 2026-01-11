@@ -31,7 +31,8 @@ export function StoreProductsContainer({
                             key={productId || `product-${index}`}
                             id={productId} 
                             name={item.name || "Produto sem nome"} 
-                            price={item.price || 0} 
+                            price={item.price || 0}
+                            coverImage={item.coverImage || undefined}
                         />
                     );
                 })}

@@ -17,3 +17,12 @@ export function LoginConnection({ body }: { body: Record<string, any> }) {
         body: body
     });
 }
+
+export function GetUserInfoConnection() {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/credentialRoute.php",
+        whitchFunction: "getUserInfo",
+        body: {}
+    });
+}

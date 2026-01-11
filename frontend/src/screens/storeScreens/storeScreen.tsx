@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { StoreProductsContainer } from "../../containers/storeContainers/storeProductsContainer";
 import { GetStoreProductsConnection } from "../../connections/storeConnection";
 import { GetStoreSearchedProductsConnection } from "../../connections/productConnection";
-import { ShoppingBag, Search, ShoppingCart, User, Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import { GetUserInfoConnection } from "../../connections/credentialConnections";
+import { ShoppingBag, Search, ShoppingCart, User, ChevronLeft, ChevronRight, ChevronUp, Plus } from "lucide-react";
 
 export default function StoreScreen({}:{}) {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -19,10 +20,56 @@ export default function StoreScreen({}:{}) {
     const [editingMaxPrice, setEditingMaxPrice] = useState(false);
     const [tempMinPrice, setTempMinPrice] = useState("");
     const [tempMaxPrice, setTempMaxPrice] = useState("");
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
+    const userMenuRef = useRef<HTMLDivElement>(null);
     const productsPerPage = 12;
 
     const bySearch = searchParams.get("bySearch") === "true";
     const searchedWord = searchParams.get("word") ?? "";
+
+    // Verificar tipo de usuário ao carregar
+    useEffect(() => {
+        async function checkUserRole() {
+            try {
+                const res = await GetUserInfoConnection();
+                if (res && res.ok) {
+                    setUserRole(res.role || "customer");
+                } else {
+                    setUserRole("customer");
+                }
+            } catch (error) {
+                setUserRole("customer");
+            }
+        }
+        checkUserRole();
+    }, []);
+
+    // Fechar menu ao clicar fora
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setShowUserMenu(false);
+            }
+        }
+
+        if (showUserMenu) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [showUserMenu]);
+
+    // Função para fazer logout
+    function handleLogout() {
+        // Aqui você pode adicionar lógica de limpeza de sessão se necessário
+        navigate("/login");
+    }
+
+    // Email do usuário (placeholder - pode ser obtido da sessão/backend)
+    const userEmail = "usuario@exemplo.com"; // Substituir por dados reais quando disponível
 
     // Carregar produtos
     useEffect(() => {
@@ -145,17 +192,92 @@ export default function StoreScreen({}:{}) {
                                 <Link to="/store" className="hover:text-blue-600">Produtos</Link>
                                 <Link to="/store" className="hover:text-blue-600">Categorias</Link>
                             </nav>
+                            {/* Botão para Vendedores - Criar Produto */}
+                            {userRole === "seller" && (
+                                <Link 
+                                    to="/products/create" 
+                                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Adicionar Produto</span>
+                                </Link>
+                            )}
                             <Link to="/cart" className="relative">
                                 <ShoppingCart className="w-6 h-6 text-gray-700" />
                             </Link>
-                            <Link to="/store" className="flex items-center gap-2">
-                                <User className="w-6 h-6 text-gray-700" />
-                                <span className="hidden sm:block text-sm font-medium text-gray-700">Usuário</span>
-                            </Link>
+                            <div className="relative" ref={userMenuRef}>
+                                <button
+                                    onClick={() => setShowUserMenu(!showUserMenu)}
+                                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                >
+                                    <User className="w-6 h-6 text-gray-700" />
+                                    <ChevronUp className={`w-4 h-4 text-gray-700 transition-transform ${showUserMenu ? "" : "rotate-180"}`} />
+                                </button>
+
+                                {/* Dropdown Menu */}
+                                {showUserMenu && (
+                                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                                        {/* Informações da Conta */}
+                                        <div className="px-4 py-3 border-b border-gray-200">
+                                            <div className="flex items-center gap-3">
+                                                <User className="w-8 h-8 text-gray-400" />
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">{userEmail}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Opções do Menu */}
+                                        <div className="py-1">
+                                            {userRole === "seller" && (
+                                                <>
+                                                    <Link
+                                                        to="/products/my-products"
+                                                        onClick={() => setShowUserMenu(false)}
+                                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        Meus Produtos
+                                                    </Link>
+                                                    <Link
+                                                        to="/products/create"
+                                                        onClick={() => setShowUserMenu(false)}
+                                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        Adicionar Produto
+                                                    </Link>
+                                                </>
+                                            )}
+                                            <Link
+                                                to="/store"
+                                                onClick={() => setShowUserMenu(false)}
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                Perfil
+                                            </Link>
+                                            <Link
+                                                to="/store"
+                                                onClick={() => setShowUserMenu(false)}
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                Configurações
+                                            </Link>
+                                            <button
+                                                onClick={() => {
+                                                    setShowUserMenu(false);
+                                                    handleLogout();
+                                                }}
+                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                Sair
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </header>
+                </header>
 
             {/* Breadcrumbs */}
             <div className="bg-white border-b border-gray-200">
@@ -352,7 +474,7 @@ export default function StoreScreen({}:{}) {
                         {/* Grid de Produtos */}
                         {paginatedProducts.length > 0 ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                                <StoreProductsContainer
+                    <StoreProductsContainer
                                     searched={false}
                                     searchedWord=""
                                     products={paginatedProducts}

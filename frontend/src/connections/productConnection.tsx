@@ -98,3 +98,30 @@ export function CreatePaymentConnection({ body }: { body: Record<string, any> })
         body: body
     });
 }
+
+export function UpdateProductConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "updateProduct",
+        body: body
+    });
+}
+
+export function DeleteProductConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "deleteProduct",
+        body: body
+    });
+}
+
+export function GetSellerProductsConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "getSellerProducts",
+        body: body
+    });
+}
