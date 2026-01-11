@@ -30,6 +30,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             echo json_encode($credentialController->loginController());
             break;
 
+        case 'getUserInfo':
+            echo json_encode($credentialController->getUserInfoController());
+            break;
+
         default:
             echo json_encode(["ok" => false, "msg" => "Função inválida"]);
     }

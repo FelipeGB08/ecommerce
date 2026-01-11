@@ -56,5 +56,35 @@ class CredentialController {
 
         return ["ok" => false, "msg" => "Nome ou senha incorretos"];
     }
+
+    function getUserInfoController() {
+        if (!isset($_SESSION["userId"])) {
+            return ["ok" => false, "msg" => "Usuário não logado"];
+        }
+
+        $userId = $_SESSION["userId"];
+        $role = $_SESSION["role"] ?? "customer";
+        $name = $_SESSION["name"] ?? "";
+
+        // Buscar nome do usuário no banco se não estiver na sessão
+        if (!$name) {
+            try {
+                $user = $this->db->users->findOne(["_id" => new MongoDB\BSON\ObjectId($userId)]);
+                if ($user) {
+                    $name = $user["name"] ?? "";
+                    $_SESSION["name"] = $name;
+                }
+            } catch (Exception $e) {
+                // Ignora erro
+            }
+        }
+
+        return [
+            "ok" => true,
+            "userId" => $userId,
+            "role" => $role,
+            "name" => $name
+        ];
+    }
 }
 ?>

@@ -26,18 +26,117 @@ class ProductController {
 
         $name = $body["name"] ?? "";
         $price = $body["price"] ?? "";
+        $coverImage = $body["coverImage"] ?? null;
+        $sellerId = $_SESSION["userId"] ?? null;
 
         if (!$name || !$price) {
             return ["ok" => false, "msg" => "Dados incompletos"];
         }
 
         $productModel = new ProductModel($this->db);
-        $productModel->createProductModel($name, $price);
+        $productModel->createProductModel($name, $price, $sellerId, $coverImage);
 
         return [
             "ok" => true,
             "msg" => "Produto cadastrado com sucesso",
         ];
+    }
+
+    function updateProductController() {
+        $this->requireSeller();
+        $req = json_decode(file_get_contents("php://input"), true);
+        $body = $req["body"] ?? null;
+
+        $productId = $body["productId"] ?? "";
+        $name = $body["name"] ?? "";
+        $price = $body["price"] ?? "";
+        $sellerId = $_SESSION["userId"] ?? null;
+
+        if (!$productId || !$name || !$price) {
+            return ["ok" => false, "msg" => "Dados incompletos"];
+        }
+
+        // Verificar se o produto pertence ao vendedor
+        try {
+            $id = new MongoDB\BSON\ObjectId($productId);
+            $product = $this->db->products->findOne(["_id" => $id]);
+            
+            if (!$product) {
+                return ["ok" => false, "msg" => "Produto não encontrado"];
+            }
+
+            // Verificar se o produto pertence ao vendedor logado
+            // Se o produto não tem sellerId (produto antigo), permite edição
+            $productSellerId = $product["sellerId"] ?? null;
+            if ($productSellerId !== null && $productSellerId !== $sellerId) {
+                return ["ok" => false, "msg" => "Você não tem permissão para editar este produto"];
+            }
+        } catch (Exception $e) {
+            return ["ok" => false, "msg" => "ID do produto inválido"];
+        }
+
+        $productModel = new ProductModel($this->db);
+        $ok = $productModel->updateProductModel($productId, $name, $price);
+
+        if ($ok) {
+            return ["ok" => true, "msg" => "Produto atualizado com sucesso"];
+        }
+
+        return ["ok" => false, "msg" => "Erro ao atualizar produto"];
+    }
+
+    function deleteProductController() {
+        $this->requireSeller();
+        $req = json_decode(file_get_contents("php://input"), true);
+        $body = $req["body"] ?? null;
+
+        $productId = $body["productId"] ?? "";
+        $sellerId = $_SESSION["userId"] ?? null;
+
+        if (!$productId) {
+            return ["ok" => false, "msg" => "ID do produto não fornecido"];
+        }
+
+        // Verificar se o produto pertence ao vendedor
+        try {
+            $id = new MongoDB\BSON\ObjectId($productId);
+            $product = $this->db->products->findOne(["_id" => $id]);
+            
+            if (!$product) {
+                return ["ok" => false, "msg" => "Produto não encontrado"];
+            }
+
+            // Verificar se o produto pertence ao vendedor logado
+            $productSellerId = $product["sellerId"] ?? null;
+            if ($productSellerId !== $sellerId) {
+                return ["ok" => false, "msg" => "Você não tem permissão para excluir este produto"];
+            }
+        } catch (Exception $e) {
+            return ["ok" => false, "msg" => "ID do produto inválido"];
+        }
+
+        $productModel = new ProductModel($this->db);
+        $ok = $productModel->deleteProductModel($productId);
+
+        if ($ok) {
+            return ["ok" => true, "msg" => "Produto excluído com sucesso"];
+        }
+
+        return ["ok" => false, "msg" => "Erro ao excluir produto"];
+    }
+
+    function getSellerProductsController() {
+        $this->requireSeller();
+        $sellerId = $_SESSION["userId"] ?? null;
+
+        if (!$sellerId) {
+            return ["ok" => false, "msg" => "Usuário não logado"];
+        }
+
+        $productModel = new ProductModel($this->db);
+        $products = $productModel->getSellerProductsModel($sellerId);
+
+        return ["ok" => true, "msg" => $products];
     }
 
     function addProductCartController() {

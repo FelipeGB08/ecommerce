@@ -7,7 +7,7 @@ class ProductModel {
         $this->db = $db;
     }
 
-    function createProductModel($name, $price) {
+    function createProductModel($name, $price, $sellerId = null, $coverImage = null) {
     
     $cleanPrice = str_replace(['R$', ' ', '.', ','], ['', '', '', '.'], $price);
     
@@ -17,13 +17,70 @@ class ProductModel {
 
     $floatPrice = (float) $cleanPrice;
 
-    $response = $this->db->products->insertOne([
+    $productData = [
         "name" => $name,
         "price" => $floatPrice 
-    ]);
+    ];
+
+    // Se houver sellerId, adiciona ao produto (salva como string)
+    if ($sellerId) {
+        $productData["sellerId"] = (string) $sellerId;
+    }
+
+    // Se houver imagem de capa, adiciona ao produto
+    if ($coverImage) {
+        $productData["coverImage"] = $coverImage;
+    }
+
+    $response = $this->db->products->insertOne($productData);
     
     return $response;
 }
+
+    function updateProductModel($productId, $name, $price) {
+        try {
+            $id = new MongoDB\BSON\ObjectId($productId);
+            
+            $cleanPrice = str_replace(['R$', ' ', '.', ','], ['', '', '', '.'], $price);
+            if (!is_numeric($cleanPrice)) {
+                return false;
+            }
+            $floatPrice = (float) $cleanPrice;
+
+            $result = $this->db->products->updateOne(
+                ["_id" => $id],
+                ['$set' => [
+                    "name" => $name,
+                    "price" => $floatPrice
+                ]]
+            );
+            
+            return $result->getModifiedCount() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    function deleteProductModel($productId) {
+        try {
+            $id = new MongoDB\BSON\ObjectId($productId);
+            
+            $result = $this->db->products->deleteOne(["_id" => $id]);
+            
+            return $result->getDeletedCount() > 0;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    function getSellerProductsModel($sellerId) {
+        try {
+            $cursor = $this->db->products->find(["sellerId" => $sellerId]);
+            return $cursor->toArray();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
 
 
     function addProductCartModel($userId, $productId){

@@ -31,7 +31,8 @@ class CredentialModel {
 
     if (password_verify($password, $user["password"])) {
         $_SESSION["userId"] = (string) $user["_id"];
-        $_SESSION["role"] = (string) $user["role"];
+        $_SESSION["role"] = (string) ($user["role"] ?? "customer");
+        $_SESSION["name"] = (string) ($user["name"] ?? $name);
         
         return true;
     }
