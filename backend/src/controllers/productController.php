@@ -240,7 +240,7 @@ class ProductController {
         $url = "https://api.abacatepay.com/v1/billing/create";
         
         // IMPORTANTE: Coloque sua chave de DESENVOLVIMENTO aqui
-        $apiKey = "abc_dev_D2KpAeHbH2NrnzHFpSmeuUak"; 
+        $apiKey = "abc_dev_bKNW4EGuwkaqBTW1acYwMtJ6"; 
 
         $data = [
             "frequency" => "ONE_TIME",

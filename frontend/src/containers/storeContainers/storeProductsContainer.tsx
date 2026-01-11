@@ -1,37 +1,48 @@
-import { GetStoreProductsConnection } from "../../connections/storeConnection"
 import { StoreProductComponent } from "../../components/storeComponents/storeProductComponent";
-import { useEffect, useState } from "react";
-import { GetStoreSearchedProductsConnection } from "../../connections/productConnection";
 
-export function StoreProductsContainer({searched, searchedWord}:{searched:boolean, searchedWord:string}) {
-    const [products, setProducts] = useState<any[]>([]); 
-    
-    useEffect(() => {
-    async function fetchData() {
-        //verifica se o parâmetro diz que veio de uma pesquisa para saber se os produtos que serão buscados devem ter filtros adicionais
-        if (searched) {
-            const res = await GetStoreSearchedProductsConnection({
-                body: { searchedWord }
-            });
-            if (res && res.ok) setProducts(res.msg);
-        } else {
-            const res = await GetStoreProductsConnection({ body: {} });
-            if (res && res.ok) setProducts(res.msg);
-        }
-    }
-    fetchData();
-}, [searched, searchedWord]);
- 
-    
-    return (<>
-            {products.map((item: any, index: any) => (
-            <StoreProductComponent 
-            key={index}
-            id={item["_id"]["$oid"]} 
-            name={item["name"]} 
-            price={item["price"]} 
-                />
-            ))}
+export function StoreProductsContainer({
+    searched, 
+    searchedWord, 
+    products
+}: {
+    searched: boolean; 
+    searchedWord: string;
+    products?: any[];
+}) {
+    // Se produtos foram passados diretamente (filtrados/paginados), use-os
+    if (products && products.length > 0) {
+        return (
+            <>
+                {products.map((item: any, index: any) => {
+                    // Tratar diferentes formatos de ID do MongoDB
+                    let productId = "";
+                    if (item._id) {
+                        if (typeof item._id === "object" && item._id.$oid) {
+                            productId = item._id.$oid;
+                        } else if (typeof item._id === "string") {
+                            productId = item._id;
+                        } else {
+                            productId = String(item._id);
+                        }
+                    }
+                    
+                    return (
+                        <StoreProductComponent 
+                            key={productId || `product-${index}`}
+                            id={productId} 
+                            name={item.name || "Produto sem nome"} 
+                            price={item.price || 0} 
+                        />
+                    );
+                })}
             </>
+        );
+    }
+
+    // Fallback: nenhum produto para exibir
+    return (
+        <div className="col-span-full text-center py-12">
+            <p className="text-gray-500">Nenhum produto encontrado.</p>
+        </div>
     );
 }

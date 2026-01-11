@@ -372,3 +372,5 @@ Array
 )
 18:29:33 - Recebi pagamento para a cobrança: bill_eHgKNKEFUNh0qcQUEXuD33FP
 18:29:33 - SUCESSO: Pedido bill_eHgKNKEFUNh0qcQUEXuD33FP atualizado para PAID.
+19:47:36 - Recebi pagamento para a cobrança: bill_EcGq63WEW1HX2hkCHYGZPKe6
+19:47:36 - SUCESSO: Pedido bill_EcGq63WEW1HX2hkCHYGZPKe6 atualizado para PAID.

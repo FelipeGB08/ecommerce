@@ -1,20 +1,13 @@
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-*.swp
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-error_log
-node_modules/
-dist/
-dist-ssr/
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-vendor/
+# Dependências - Ocupam muito espaço e não devem ser versionadas
+frontend/node_modules/
+backend/vendor/
+
+# Segurança - Arquivos que contêm senhas reais
 .env
-*.env
-.phpunit.result.cache
+backend/.env
+frontend/.env
+
+# Temporários e Logs - Podem conter dados da sua máquina
+backend/*.txt
+frontend/dist/
+.DS_Store
