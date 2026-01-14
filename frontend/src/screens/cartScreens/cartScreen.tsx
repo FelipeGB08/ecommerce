@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GetUserCartConnection, UpdateCartQuantityConnection, RemoveFromCartConnection } from "../../connections/productConnection";
 import { CreatePaymentConnection } from "../../connections/productConnection";
-import { GetUserInfoConnection } from "../../connections/credentialConnections";
-import { ShoppingBag, Trash2, Plus, Minus, ArrowLeft, ShoppingCart, User, ChevronUp } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart, ArrowLeft } from "lucide-react";
+import { useToast } from "../../contexts/toastContext";
+import { useCart } from "../../contexts/cartContext";
+import Navbar from "../../components/Navbar";
 
 export default function CartScreen() {
     const [cartItems, setCartItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [userRole, setUserRole] = useState<string | null>(null);
     const navigate = useNavigate();
+    const { showToast } = useToast();
+    const { refreshCart } = useCart();
 
     // Função para recarregar o carrinho
     async function loadCart() {
@@ -23,23 +26,6 @@ export default function CartScreen() {
 
     useEffect(() => {
         loadCart();
-    }, []);
-
-    // Verificar tipo de usuário
-    useEffect(() => {
-        async function checkUserRole() {
-            try {
-                const res = await GetUserInfoConnection();
-                if (res && res.ok) {
-                    setUserRole(res.role || "customer");
-                } else {
-                    setUserRole("customer");
-                }
-            } catch (error) {
-                setUserRole("customer");
-            }
-        }
-        checkUserRole();
     }, []);
 
     // Lógica para alterar quantidade
@@ -62,7 +48,12 @@ export default function CartScreen() {
 
     // Lógica para remover item
     async function handleRemove(productId: string) {
-        if(!confirm("Tem certeza que deseja remover este item do carrinho?")) return;
+        // Encontrar o item antes de remover para pegar o nome
+        const itemToRemove = cartItems.find(item => {
+            const itemId = item.productId?.$oid ? String(item.productId.$oid) : String(item.productId);
+            return itemId === productId;
+        });
+        const productName = itemToRemove?.name || "Produto";
 
         // Remove da tela imediatamente
         setCartItems(prev => prev.filter(item => {
@@ -71,9 +62,25 @@ export default function CartScreen() {
         }));
 
         // Chama o backend
-        await RemoveFromCartConnection({ 
-            body: { productId: productId } 
-        });
+        try {
+            const res = await RemoveFromCartConnection({ 
+                body: { productId: productId } 
+            });
+            
+            if (res && res.ok) {
+                showToast(`${productName} removido do carrinho!`, "success");
+                refreshCart(); // Atualizar quantidade do carrinho
+            } else {
+                showToast("Erro ao remover produto do carrinho.", "error");
+                // Recarregar o carrinho em caso de erro
+                loadCart();
+            }
+        } catch (error) {
+            console.error("Erro ao remover do carrinho:", error);
+            showToast("Erro ao remover produto do carrinho.", "error");
+            // Recarregar o carrinho em caso de erro
+            loadCart();
+        }
     }
 
     async function handleCheckout() {
@@ -96,9 +103,33 @@ export default function CartScreen() {
         setLoading(false);
     }
 
+    // Função para calcular preço com desconto
+    function getItemPrice(item: any): number {
+        const hasPromotion = item.percentagePromotion && item.percentagePromotion > 0;
+        let isPromotionActive = false;
+        let promotionPrice = item.price || 0;
+        
+        if (hasPromotion && item.promotionStartDate && item.promotionEndDate) {
+            try {
+                const now = new Date();
+                const start = new Date(item.promotionStartDate.replace(' ', 'T'));
+                const end = new Date(item.promotionEndDate.replace(' ', 'T'));
+                isPromotionActive = now >= start && now <= end;
+                
+                if (isPromotionActive) {
+                    promotionPrice = item.price * (1 - item.percentagePromotion / 100);
+                }
+            } catch (e) {
+                console.error("Erro ao verificar promoção:", e);
+            }
+        }
+        
+        return promotionPrice;
+    }
+
     // Calcula o total do carrinho
     const cartTotal = cartItems.reduce((acc, item) => {
-        return acc + ((item.price || 0) * (item.quantity || 1));
+        return acc + (getItemPrice(item) * (item.quantity || 1));
     }, 0);
 
     // Função auxiliar para obter o ID do produto
@@ -107,46 +138,19 @@ export default function CartScreen() {
         return String(item.productId || "");
     }
 
-    // Função para gerar imagem placeholder
-    function getProductImage(name: string): string {
-        return `https://via.placeholder.com/150x150?text=${encodeURIComponent((name || "Produto").substring(0, 10))}`;
+    // Função para obter imagem do produto
+    function getProductImage(item: any): string {
+        // Se o item tiver coverImage, usar ela
+        if (item.coverImage) {
+            return item.coverImage;
+        }
+        // Caso contrário, usar placeholder baseado no nome
+        return `https://via.placeholder.com/150x150?text=${encodeURIComponent((item.name || "Produto").substring(0, 10))}`;
     }
 
     return (
         <main className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link to="/store" className="flex items-center gap-3">
-                            <ShoppingBag className="w-8 h-8 text-blue-600" />
-                            <h1 className="text-2xl font-bold text-gray-900">Ecommerce</h1>
-                        </Link>
-
-                        {/* Botões de Ação */}
-                        <div className="flex items-center gap-4">
-                            {/* Botão para Vendedores - Criar Produto */}
-                            {userRole === "seller" && (
-                                <Link 
-                                    to="/products/create" 
-                                    className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>Adicionar Produto</span>
-                                </Link>
-                            )}
-                            <Link 
-                                to="/store" 
-                                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5" />
-                                <span className="hidden sm:block text-sm font-medium">Continuar Comprando</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <Navbar />
 
             {/* Breadcrumbs */}
             <div className="bg-white border-b border-gray-200">
@@ -178,7 +182,22 @@ export default function CartScreen() {
                         <div className="lg:col-span-2 space-y-4">
                             {cartItems.map((item, index) => {
                                 const pId = getProductId(item);
-                                const itemTotal = (item.price || 0) * (item.quantity || 1);
+                                const itemPrice = getItemPrice(item);
+                                const itemTotal = itemPrice * (item.quantity || 1);
+                                
+                                // Verificar se há promoção ativa
+                                const hasPromotion = item.percentagePromotion && item.percentagePromotion > 0;
+                                let isPromotionActive = false;
+                                if (hasPromotion && item.promotionStartDate && item.promotionEndDate) {
+                                    try {
+                                        const now = new Date();
+                                        const start = new Date(item.promotionStartDate.replace(' ', 'T'));
+                                        const end = new Date(item.promotionEndDate.replace(' ', 'T'));
+                                        isPromotionActive = now >= start && now <= end;
+                                    } catch (e) {
+                                        // Ignorar erro
+                                    }
+                                }
                                 
                                 return (
                                     <div 
@@ -189,7 +208,7 @@ export default function CartScreen() {
                                             {/* Imagem do Produto */}
                                             <Link to={`/products/${pId}`} className="flex-shrink-0">
                                                 <img
-                                                    src={getProductImage(item.name)}
+                                                    src={getProductImage(item)}
                                                     alt={item.name || "Produto"}
                                                     className="w-24 h-24 object-cover rounded-lg border border-gray-200"
                                                 />
@@ -204,12 +223,31 @@ export default function CartScreen() {
                                                                 {item.name || "Produto sem nome"}
                                                             </h3>
                                                         </Link>
-                                                        <p className="text-lg font-bold text-gray-900 mb-4">
-                                                            {Number(item.price || 0).toLocaleString('pt-BR', { 
-                                                                style: 'currency', 
-                                                                currency: 'BRL' 
-                                                            })}
-                                                        </p>
+                                                        <div className="mb-4">
+                                                            {isPromotionActive ? (
+                                                                <div>
+                                                                    <p className="text-xs text-gray-400 line-through mb-1">
+                                                                        {Number(item.price || 0).toLocaleString('pt-BR', { 
+                                                                            style: 'currency', 
+                                                                            currency: 'BRL' 
+                                                                        })}
+                                                                    </p>
+                                                                    <p className="text-lg font-bold text-red-600">
+                                                                        {Number(itemPrice).toLocaleString('pt-BR', { 
+                                                                            style: 'currency', 
+                                                                            currency: 'BRL' 
+                                                                        })}
+                                                                    </p>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-lg font-bold text-gray-900">
+                                                                    {Number(itemPrice).toLocaleString('pt-BR', { 
+                                                                        style: 'currency', 
+                                                                        currency: 'BRL' 
+                                                                    })}
+                                                                </p>
+                                                            )}
+                                                        </div>
 
                                                         {/* Controles de Quantidade */}
                                                         <div className="flex items-center gap-3 mb-4">

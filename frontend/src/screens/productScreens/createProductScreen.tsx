@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { CreateProductConnection } from "../../connections/productConnection";
-import { ShoppingBag, Upload, X, CheckCircle2, AlertCircle } from "lucide-react";
+import { Upload, X, CheckCircle2, AlertCircle, Tag } from "lucide-react";
+import Navbar from "../../components/Navbar";
 
 interface ProductImage {
     id: string;
@@ -20,9 +21,10 @@ export default function CreateProductScreen() {
     const [brand, setBrand] = useState("");
     const [description, setDescription] = useState("");
     const [basePrice, setBasePrice] = useState("");
-    const [discountPrice, setDiscountPrice] = useState("");
     const [quantity, setQuantity] = useState("");
     const [images, setImages] = useState<ProductImage[]>([]);
+    const [tags, setTags] = useState<string[]>([]);
+    const [tagInput, setTagInput] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
     const [errorMessage, setErrorMessage] = useState("");
@@ -89,6 +91,22 @@ export default function CreateProductScreen() {
         e.preventDefault();
     }
 
+    // Funções para gerenciar tags
+    function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.key === "Enter" && tagInput.trim()) {
+            e.preventDefault();
+            const tag = tagInput.trim().toLowerCase();
+            if (!tags.includes(tag) && tag.length > 0) {
+                setTags([...tags, tag]);
+                setTagInput("");
+            }
+        }
+    }
+
+    function handleRemoveTag(tagToRemove: string) {
+        setTags(tags.filter(tag => tag !== tagToRemove));
+    }
+
     async function handleCreateProduct(e: React.FormEvent) {
         e.preventDefault();
         setSubmitStatus(null);
@@ -125,23 +143,39 @@ export default function CreateProductScreen() {
             return;
         }
 
+        if (tags.length < 3) {
+            setErrorMessage("É necessário adicionar pelo menos 3 tags para o produto.");
+            setSubmitStatus("error");
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
             const priceToSend = basePrice.replace(",", ".");
             
-            // Converter a primeira imagem para base64
+            // Converter todas as imagens para base64
+            const imagesBase64: string[] = [];
             let coverImageBase64 = null;
-            if (images.length > 0 && images[0].file) {
-                coverImageBase64 = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        const base64String = reader.result as string;
-                        resolve(base64String);
-                    };
-                    reader.onerror = reject;
-                    reader.readAsDataURL(images[0].file);
-                });
+            
+            for (const image of images) {
+                if (image.file) {
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            const base64String = reader.result as string;
+                            resolve(base64String);
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(image.file);
+                    });
+                    imagesBase64.push(base64);
+                    
+                    // A primeira imagem é a capa
+                    if (!coverImageBase64) {
+                        coverImageBase64 = base64;
+                    }
+                }
             }
             
             const res = await CreateProductConnection({ 
@@ -149,23 +183,26 @@ export default function CreateProductScreen() {
                     name, 
                     price: priceToSend,
                     coverImage: coverImageBase64,
-                    // Campos adicionais para quando o backend suportar:
-                    // category, brand, description, quantity, images
+                    description: description || null,
+                    category: category || null,
+                    images: imagesBase64.length > 0 ? imagesBase64 : null,
+                    tags: tags
                 } 
             });
-            
-            if (res && res.ok) {
+        
+        if (res && res.ok) {
                 setSubmitStatus("success");
                 // Limpar formulário após sucesso
                 setTimeout(() => {
-                    setName("");
+            setName("");
                     setCategory("");
                     setBrand("");
                     setDescription("");
                     setBasePrice("");
-                    setDiscountPrice("");
                     setQuantity("");
                     setImages([]);
+                    setTags([]);
+                    setTagInput("");
                     setSubmitStatus(null);
                 }, 3000);
             } else {
@@ -182,26 +219,7 @@ export default function CreateProductScreen() {
 
     return (
         <main className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link to="/store" className="flex items-center gap-3">
-                            <ShoppingBag className="w-8 h-8 text-blue-600" />
-                            <h1 className="text-2xl font-bold text-gray-900">Ecommerce</h1>
-                        </Link>
-
-                        {/* Navegação */}
-                        <nav className="hidden md:flex gap-6 text-sm font-medium text-gray-700">
-                            <Link to="/store" className="hover:text-blue-600">Dashboard</Link>
-                            <Link to="/products/create" className="text-blue-600">Meus Produtos</Link>
-                            <Link to="/promotions" className="hover:text-blue-600">Promoções</Link>
-                            <Link to="/store" className="hover:text-blue-600">Relatórios</Link>
-                        </nav>
-                    </div>
-                </div>
-            </header>
+            <Navbar />
 
             {/* Conteúdo Principal */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -263,10 +281,10 @@ export default function CreateProductScreen() {
                                     <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                                         Nome do Produto <span className="text-red-500">*</span>
                                     </label>
-                                    <input
+                        <input
                                         id="name"
-                                        type="text"
-                                        value={name}
+                            type="text"
+                            value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="Ex.: Fones de Ouvido com Cancelamento de Ruído"
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
@@ -278,7 +296,7 @@ export default function CreateProductScreen() {
                                     <div>
                                         <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
                                             Categoria <span className="text-red-500">*</span>
-                                        </label>
+                    </label>
                                         <select
                                             id="category"
                                             value={category}
@@ -299,9 +317,9 @@ export default function CreateProductScreen() {
                                         <label htmlFor="brand" className="block text-sm font-medium text-gray-700 mb-2">
                                             Marca (Opcional)
                                         </label>
-                                        <input
+                        <input
                                             id="brand"
-                                            type="text"
+                            type="text"
                                             value={brand}
                                             onChange={(e) => setBrand(e.target.value)}
                                             placeholder="Ex.: Sony, Nike"
@@ -323,6 +341,47 @@ export default function CreateProductScreen() {
                                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-y"
                                         required
                                     />
+                                </div>
+
+                                <div>
+                                    <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
+                                        Tags <span className="text-red-500">*</span>
+                                        <span className="text-xs text-gray-500 ml-2">(mínimo 3 tags, pressione Enter para adicionar)</span>
+                                    </label>
+                                    <input
+                                        id="tags"
+                                        type="text"
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        onKeyDown={handleAddTag}
+                                        placeholder="Ex.: celular, smartphone, tecnologia (pressione Enter para adicionar)"
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                    />
+                                    {tags.length > 0 && (
+                                        <div className="mt-3 flex flex-wrap gap-2">
+                                            {tags.map((tag, index) => (
+                                                <span
+                                                    key={index}
+                                                    className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                                                >
+                                                    <Tag className="w-3 h-3" />
+                                                    {tag}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveTag(tag)}
+                                                        className="hover:text-blue-600 transition-colors"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {tags.length < 3 && (
+                                        <p className="mt-2 text-sm text-gray-500">
+                                            Adicione pelo menos {3 - tags.length} tag{3 - tags.length !== 1 ? 's' : ''} restante{3 - tags.length !== 1 ? 's' : ''}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -407,7 +466,7 @@ export default function CreateProductScreen() {
                                 <div>
                                     <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-2">
                                         Preço Base <span className="text-red-500">*</span>
-                                    </label>
+                    </label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
                                         <input
@@ -423,27 +482,6 @@ export default function CreateProductScreen() {
                                             required
                                         />
                                     </div>
-                                </div>
-
-                                <div>
-                                    <label htmlFor="discountPrice" className="block text-sm font-medium text-gray-700 mb-2">
-                                        Preço com Desconto
-                                    </label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
-                                        <input
-                                            id="discountPrice"
-                                            type="text"
-                                            value={discountPrice}
-                                            onChange={(e) => {
-                                                const value = e.target.value.replace(/[^\d,]/g, "");
-                                                setDiscountPrice(value);
-                                            }}
-                                            placeholder="0,00"
-                                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                        />
-                                    </div>
-                                    <p className="mt-1 text-xs text-gray-500">Deixe vazio se não houver desconto.</p>
                                 </div>
                             </div>
                         </div>
@@ -470,7 +508,7 @@ export default function CreateProductScreen() {
                         </div>
                     </div>
                 </form>
-            </div>
+                </div>
         </main>
     );
 }

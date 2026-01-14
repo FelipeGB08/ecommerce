@@ -5,10 +5,12 @@ import { GetStoreProductsConnection } from "../../connections/storeConnection";
 import { GetStoreSearchedProductsConnection } from "../../connections/productConnection";
 import { GetUserInfoConnection } from "../../connections/credentialConnections";
 import { ShoppingBag, Search, ShoppingCart, User, ChevronLeft, ChevronRight, ChevronUp, Plus } from "lucide-react";
+import { useCart } from "../../contexts/cartContext";
 
 export default function StoreScreen({}:{}) {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { cartItemCount } = useCart();
     const [searchTerm, setSearchTerm] = useState("");
     const [products, setProducts] = useState<any[]>([]);
     const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
@@ -20,26 +22,42 @@ export default function StoreScreen({}:{}) {
     const [editingMaxPrice, setEditingMaxPrice] = useState(false);
     const [tempMinPrice, setTempMinPrice] = useState("");
     const [tempMaxPrice, setTempMaxPrice] = useState("");
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [userName, setUserName] = useState<string>("");
     const userMenuRef = useRef<HTMLDivElement>(null);
     const productsPerPage = 12;
+
+    // Categorias disponíveis
+    const categories = [
+        { value: "roupa", label: "Roupa" },
+        { value: "objeto", label: "Objeto" },
+        { value: "tecnologia", label: "Tecnologia" },
+        { value: "casa", label: "Casa e Decoração" },
+        { value: "esporte", label: "Esporte" },
+        { value: "livro", label: "Livros" },
+        { value: "outro", label: "Outro" }
+    ];
 
     const bySearch = searchParams.get("bySearch") === "true";
     const searchedWord = searchParams.get("word") ?? "";
 
-    // Verificar tipo de usuário ao carregar
+    // Verificar tipo de usuário e obter nome ao carregar
     useEffect(() => {
         async function checkUserRole() {
             try {
                 const res = await GetUserInfoConnection();
                 if (res && res.ok) {
                     setUserRole(res.role || "customer");
+                    setUserName(res.name || "");
                 } else {
                     setUserRole("customer");
+                    setUserName("");
                 }
             } catch (error) {
                 setUserRole("customer");
+                setUserName("");
             }
         }
         checkUserRole();
@@ -67,9 +85,6 @@ export default function StoreScreen({}:{}) {
         // Aqui você pode adicionar lógica de limpeza de sessão se necessário
         navigate("/login");
     }
-
-    // Email do usuário (placeholder - pode ser obtido da sessão/backend)
-    const userEmail = "usuario@exemplo.com"; // Substituir por dados reais quando disponível
 
     // Carregar produtos
     useEffect(() => {
@@ -116,6 +131,14 @@ export default function StoreScreen({}:{}) {
             return price >= minPrice && price <= maxPrice;
         });
 
+        // Filtro de categorias
+        if (selectedCategories.length > 0) {
+            filtered = filtered.filter((p: any) => {
+                const productCategory = p.category || "";
+                return selectedCategories.includes(productCategory);
+            });
+        }
+
         // Ordenação
         filtered.sort((a: any, b: any) => {
             switch (sortBy) {
@@ -131,7 +154,7 @@ export default function StoreScreen({}:{}) {
 
         setFilteredProducts(filtered);
         setCurrentPage(1);
-    }, [products, minPrice, maxPrice, sortBy]);
+    }, [products, minPrice, maxPrice, selectedCategories, sortBy]);
 
     // Função de pesquisa
     function handleSearch(e: React.FormEvent) {
@@ -157,13 +180,25 @@ export default function StoreScreen({}:{}) {
         } else {
             setMaxPrice(10000);
         }
+        setSelectedCategories([]);
         setSortBy("name");
     }
 
+    // Toggle categoria no filtro
+    function toggleCategory(categoryValue: string) {
+        setSelectedCategories(prev => {
+            if (prev.includes(categoryValue)) {
+                return prev.filter(cat => cat !== categoryValue);
+            } else {
+                return [...prev, categoryValue];
+            }
+        });
+    }
+
     return(
-        <main className="min-h-screen bg-gray-50">
+        <main className="min-h-screen bg-gray-50 pt-16">
             {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
@@ -188,10 +223,6 @@ export default function StoreScreen({}:{}) {
 
                         {/* Navegação e Ícones */}
                         <div className="flex items-center gap-6">
-                            <nav className="hidden md:flex gap-6 text-sm font-medium text-gray-700">
-                                <Link to="/store" className="hover:text-blue-600">Produtos</Link>
-                                <Link to="/store" className="hover:text-blue-600">Categorias</Link>
-                            </nav>
                             {/* Botão para Vendedores - Criar Produto */}
                             {userRole === "seller" && (
                                 <Link 
@@ -204,6 +235,11 @@ export default function StoreScreen({}:{}) {
                             )}
                             <Link to="/cart" className="relative">
                                 <ShoppingCart className="w-6 h-6 text-gray-700" />
+                                {cartItemCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                                        {cartItemCount > 99 ? '99+' : cartItemCount}
+                                    </span>
+                                )}
                             </Link>
                             <div className="relative" ref={userMenuRef}>
                                 <button
@@ -222,7 +258,7 @@ export default function StoreScreen({}:{}) {
                                             <div className="flex items-center gap-3">
                                                 <User className="w-8 h-8 text-gray-400" />
                                                 <div>
-                                                    <p className="text-sm font-medium text-gray-900">{userEmail}</p>
+                                                    <p className="text-sm font-medium text-gray-900">{userName || "Usuário"}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -247,20 +283,6 @@ export default function StoreScreen({}:{}) {
                                                     </Link>
                                                 </>
                                             )}
-                                            <Link
-                                                to="/store"
-                                                onClick={() => setShowUserMenu(false)}
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            >
-                                                Perfil
-                                            </Link>
-                                            <Link
-                                                to="/store"
-                                                onClick={() => setShowUserMenu(false)}
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                            >
-                                                Configurações
-                                            </Link>
                                             <button
                                                 onClick={() => {
                                                     setShowUserMenu(false);
@@ -272,7 +294,7 @@ export default function StoreScreen({}:{}) {
                                             </button>
                                         </div>
                                     </div>
-                                )}
+                    )}
                             </div>
                         </div>
                     </div>
@@ -312,6 +334,27 @@ export default function StoreScreen({}:{}) {
                                 </button>
                             </div>
 
+                            {/* Filtro de Categorias */}
+                            <div className="mb-6 pb-6 border-b border-gray-200">
+                                <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase">Categorias</h3>
+                                <div className="space-y-2">
+                                    {categories.map((category) => (
+                                        <label
+                                            key={category.value}
+                                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedCategories.includes(category.value)}
+                                                onChange={() => toggleCategory(category.value)}
+                                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                            />
+                                            <span className="text-sm text-gray-700">{category.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Filtro de Preço */}
                             {products.length > 0 && (() => {
                                 const maxProductPrice = Math.max(...products.map((p: any) => p.price || 0), 10000);
@@ -334,19 +377,14 @@ export default function StoreScreen({}:{}) {
 
                                 return (
                                     <div className="mb-6">
-                                        <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase">Faixa de Preço</h3>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label 
-                                                    className="block text-sm text-gray-600 mb-2 cursor-text"
-                                                    onClick={() => {
-                                                        if (!editingMinPrice) {
-                                                            setEditingMinPrice(true);
-                                                            setTempMinPrice(minPrice.toString());
-                                                        }
-                                                    }}
-                                                >
-                                                    Mínimo:{" "}
+                                        <h3 className="text-sm font-semibold text-gray-900 mb-4 uppercase">Faixa de Preço</h3>
+                                        
+                                        {/* Range único melhorado */}
+                                        <div className="space-y-6">
+                                            {/* Valores exibidos em botões clicáveis */}
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <label className="block text-xs text-gray-500 mb-2 font-medium">De</label>
                                                     {editingMinPrice ? (
                                                         <input
                                                             type="number"
@@ -364,40 +402,23 @@ export default function StoreScreen({}:{}) {
                                                                     setTempMinPrice("");
                                                                 }
                                                             }}
-                                                            className="inline-block w-24 ml-1 px-2 py-1 border border-blue-500 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                                            className="w-full px-3 py-2 border border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-medium"
                                                             autoFocus
                                                         />
                                                     ) : (
-                                                        <span className="text-gray-900 font-medium">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingMinPrice(true);
+                                                                setTempMinPrice(minPrice.toString());
+                                                            }}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white hover:border-blue-500 hover:bg-blue-50 transition-colors text-left text-sm font-medium text-gray-900"
+                                                        >
                                                             {Number(minPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                                        </span>
+                                                        </button>
                                                     )}
-                                                </label>
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max={maxProductPrice}
-                                                    step="10"
-                                                    value={minPrice}
-                                                    onChange={(e) => {
-                                                        const val = Number(e.target.value);
-                                                        setMinPrice(val);
-                                                        if (val > maxPrice) setMaxPrice(val);
-                                                    }}
-                                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label 
-                                                    className="block text-sm text-gray-600 mb-2 cursor-text"
-                                                    onClick={() => {
-                                                        if (!editingMaxPrice) {
-                                                            setEditingMaxPrice(true);
-                                                            setTempMaxPrice(maxPrice.toString());
-                                                        }
-                                                    }}
-                                                >
-                                                    Máximo:{" "}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <label className="block text-xs text-gray-500 mb-2 font-medium">Até</label>
                                                     {editingMaxPrice ? (
                                                         <input
                                                             type="number"
@@ -415,28 +436,61 @@ export default function StoreScreen({}:{}) {
                                                                     setTempMaxPrice("");
                                                                 }
                                                             }}
-                                                            className="inline-block w-24 ml-1 px-2 py-1 border border-blue-500 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                                            className="w-full px-3 py-2 border border-blue-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-medium"
                                                             autoFocus
                                                         />
                                                     ) : (
-                                                        <span className="text-gray-900 font-medium">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingMaxPrice(true);
+                                                                setTempMaxPrice(maxPrice.toString());
+                                                            }}
+                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white hover:border-blue-500 hover:bg-blue-50 transition-colors text-left text-sm font-medium text-gray-900"
+                                                        >
                                                             {Number(maxPrice).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                                        </span>
+                                                        </button>
                                                     )}
-                                                </label>
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max={maxProductPrice}
-                                                    step="10"
-                                                    value={maxPrice}
-                                                    onChange={(e) => {
-                                                        const val = Number(e.target.value);
-                                                        setMaxPrice(val);
-                                                        if (val < minPrice) setMinPrice(val);
-                                                    }}
-                                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                                />
+                                                </div>
+                                            </div>
+
+                                            {/* Sliders */}
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max={maxProductPrice}
+                                                        step="10"
+                                                        value={minPrice}
+                                                        onChange={(e) => {
+                                                            const val = Number(e.target.value);
+                                                            setMinPrice(val);
+                                                            if (val > maxPrice) setMaxPrice(val);
+                                                        }}
+                                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                        style={{
+                                                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(minPrice / maxProductPrice) * 100}%, #e5e7eb ${(minPrice / maxProductPrice) * 100}%, #e5e7eb 100%)`
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max={maxProductPrice}
+                                                        step="10"
+                                                        value={maxPrice}
+                                                        onChange={(e) => {
+                                                            const val = Number(e.target.value);
+                                                            setMaxPrice(val);
+                                                            if (val < minPrice) setMinPrice(val);
+                                                        }}
+                                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                        style={{
+                                                            background: `linear-gradient(to right, #e5e7eb 0%, #e5e7eb ${(maxPrice / maxProductPrice) * 100}%, #3b82f6 ${(maxPrice / maxProductPrice) * 100}%, #3b82f6 100%)`
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

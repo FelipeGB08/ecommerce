@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GetSellerProductsConnection, UpdateProductConnection, DeleteProductConnection } from "../../connections/productConnection";
-import { ShoppingBag, Plus, Edit2, Trash2, ArrowLeft, CheckCircle2, AlertCircle, X } from "lucide-react";
+import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, X, Tag } from "lucide-react";
+import Navbar from "../../components/Navbar";
 
 export default function MyProductsScreen() {
     const [products, setProducts] = useState<any[]>([]);
@@ -122,38 +123,14 @@ export default function MyProductsScreen() {
         return String(product._id || "");
     }
 
+    function getProductImage(product: any): string {
+        if (product.coverImage) return product.coverImage;
+        return `https://via.placeholder.com/300x300?text=${encodeURIComponent((product.name || "Produto").substring(0, 20))}`;
+    }
+
     return (
         <main className="min-h-screen bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link to="/store" className="flex items-center gap-3">
-                            <ShoppingBag className="w-8 h-8 text-blue-600" />
-                            <h1 className="text-2xl font-bold text-gray-900">Ecommerce</h1>
-                        </Link>
-
-                        {/* Botões de Ação */}
-                        <div className="flex items-center gap-4">
-                            <Link
-                                to="/products/create"
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                            >
-                                <Plus className="w-4 h-4" />
-                                <span>Adicionar Produto</span>
-                            </Link>
-                            <Link
-                                to="/store"
-                                className="flex items-center gap-2 text-gray-700 hover:text-blue-600 transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5" />
-                                <span className="hidden sm:block text-sm font-medium">Voltar</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <Navbar />
 
             {/* Breadcrumbs */}
             <div className="bg-white border-b border-gray-200">
@@ -196,115 +173,154 @@ export default function MyProductsScreen() {
                     </div>
                 )}
 
-                {/* Lista de Produtos */}
+                {/* Lista de Produtos em Grid */}
                 {loading ? (
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
                         <p className="text-gray-500">Carregando produtos...</p>
                     </div>
                 ) : products.length > 0 ? (
-                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-50 border-b border-gray-200">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Produto
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Preço
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Ações
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {products.map((product, index) => {
-                                        const productId = getProductId(product);
-                                        const isEditing = editingProduct === productId;
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {products.map((product, index) => {
+                            const productId = getProductId(product);
+                            const isEditing = editingProduct === productId;
 
-                                        return (
-                                            <tr key={index} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {isEditing ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editName}
-                                                            onChange={(e) => setEditName(e.target.value)}
-                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                                            placeholder="Nome do produto"
-                                                        />
-                                                    ) : (
-                                                        <div className="text-sm font-medium text-gray-900">
-                                                            {product.name || "Produto sem nome"}
+                            return (
+                                <div
+                                    key={index}
+                                    className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+                                >
+                                    {/* Imagem do Produto */}
+                                    <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                                        <img
+                                            src={getProductImage(product)}
+                                            alt={product.name || "Produto"}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+
+                                    {/* Informações do Produto */}
+                                    <div className="p-4 flex flex-col flex-1">
+                                        {isEditing ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={editName}
+                                                    onChange={(e) => setEditName(e.target.value)}
+                                                    className="w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-medium"
+                                                    placeholder="Nome do produto"
+                                                />
+                                                <div className="relative mb-4">
+                                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">R$</span>
+                                                    <input
+                                                        type="text"
+                                                        value={editPrice}
+                                                        onChange={(e) => {
+                                                            const value = e.target.value.replace(/[^\d,]/g, "");
+                                                            setEditPrice(value);
+                                                        }}
+                                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                                        placeholder="0,00"
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2 mt-auto">
+                                                    <button
+                                                        onClick={() => saveEdit(productId)}
+                                                        className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                                                    >
+                                                        Salvar
+                                                    </button>
+                                                    <button
+                                                        onClick={cancelEdit}
+                                                        className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem]">
+                                                    {product.name || "Produto sem nome"}
+                                                </h3>
+                                                {(() => {
+                                                    // Verificar se há promoção ativa
+                                                    const hasPromotion = product.percentagePromotion && product.percentagePromotion > 0;
+                                                    let isPromotionActive = false;
+                                                    let promotionPrice = product.price || 0;
+                                                    
+                                                    if (hasPromotion && product.promotionStartDate && product.promotionEndDate) {
+                                                        try {
+                                                            const now = new Date();
+                                                            const start = new Date(product.promotionStartDate.replace(' ', 'T'));
+                                                            const end = new Date(product.promotionEndDate.replace(' ', 'T'));
+                                                            isPromotionActive = now >= start && now <= end;
+                                                            
+                                                            if (isPromotionActive) {
+                                                                promotionPrice = product.price * (1 - product.percentagePromotion / 100);
+                                                            }
+                                                        } catch (e) {
+                                                            console.error("Erro ao verificar promoção:", e);
+                                                        }
+                                                    }
+                                                    
+                                                    return (
+                                                        <div className="mb-4">
+                                                            {isPromotionActive ? (
+                                                                <div>
+                                                                    <p className="text-xs text-gray-400 line-through mb-1">
+                                                                        {Number(product.price || 0).toLocaleString('pt-BR', {
+                                                                            style: 'currency',
+                                                                            currency: 'BRL'
+                                                                        })}
+                                                                    </p>
+                                                                    <p className="text-xl font-bold text-red-600">
+                                                                        {Number(promotionPrice).toLocaleString('pt-BR', {
+                                                                            style: 'currency',
+                                                                            currency: 'BRL'
+                                                                        })}
+                                                                    </p>
+                                                                </div>
+                                                            ) : (
+                                                                <p className="text-xl font-bold text-gray-900">
+                                                                    {Number(product.price || 0).toLocaleString('pt-BR', {
+                                                                        style: 'currency',
+                                                                        currency: 'BRL'
+                                                                    })}
+                                                                </p>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {isEditing ? (
-                                                        <div className="relative">
-                                                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
-                                                            <input
-                                                                type="text"
-                                                                value={editPrice}
-                                                                onChange={(e) => {
-                                                                    const value = e.target.value.replace(/[^\d,]/g, "");
-                                                                    setEditPrice(value);
-                                                                }}
-                                                                className="w-32 pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                                                                placeholder="0,00"
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-sm text-gray-900">
-                                                            {Number(product.price || 0).toLocaleString('pt-BR', {
-                                                                style: 'currency',
-                                                                currency: 'BRL'
-                                                            })}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    {isEditing ? (
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <button
-                                                                onClick={() => saveEdit(productId)}
-                                                                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                                                            >
-                                                                Salvar
-                                                            </button>
-                                                            <button
-                                                                onClick={cancelEdit}
-                                                                className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
-                                                            >
-                                                                Cancelar
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-end gap-2">
-                                                            <button
-                                                                onClick={() => startEdit(product)}
-                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                title="Editar produto"
-                                                            >
-                                                                <Edit2 className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleDelete(productId, product.name || "Produto")}
-                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                title="Excluir produto"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                                    );
+                                                })()}
+                                                <div className="flex gap-2 mt-auto">
+                                                    <button
+                                                        onClick={() => navigate(`/products/promotion/${productId}`)}
+                                                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 border border-purple-300 rounded-md text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+                                                        title="Adicionar promoção"
+                                                    >
+                                                        <Tag className="w-4 h-4" />
+                                                        Promoção
+                                                    </button>
+                                                    <button
+                                                        onClick={() => startEdit(product)}
+                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                                        title="Editar produto"
+                                                    >
+                                                        <Edit2 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(productId, product.name || "Produto")}
+                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                        title="Excluir produto"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">

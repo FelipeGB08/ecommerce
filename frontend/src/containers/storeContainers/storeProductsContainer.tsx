@@ -26,14 +26,66 @@ export function StoreProductsContainer({
                         }
                     }
                     
+                    // Converter datas de promoção se existirem
+                    let promotionStartDate: Date | undefined;
+                    let promotionEndDate: Date | undefined;
+                    let promotionPercentage: number | undefined;
+
+                    if (item.promotionStartDate) {
+                        try {
+                            // Se vier como string do formato "Y-m-d H:i:s"
+                            if (typeof item.promotionStartDate === 'string') {
+                                promotionStartDate = new Date(item.promotionStartDate.replace(' ', 'T'));
+                            } else if (typeof item.promotionStartDate === 'object') {
+                                if (item.promotionStartDate.$date) {
+                                    promotionStartDate = new Date(item.promotionStartDate.$date);
+                                } else if (typeof item.promotionStartDate === 'number') {
+                                    promotionStartDate = new Date(item.promotionStartDate);
+                                }
+                            } else if (typeof item.promotionStartDate === 'number') {
+                                promotionStartDate = new Date(item.promotionStartDate);
+                            }
+                        } catch (e) {
+                            console.error("Erro ao converter promotionStartDate:", e, item.promotionStartDate);
+                        }
+                    }
+
+                    if (item.promotionEndDate) {
+                        try {
+                            // Se vier como string do formato "Y-m-d H:i:s"
+                            if (typeof item.promotionEndDate === 'string') {
+                                promotionEndDate = new Date(item.promotionEndDate.replace(' ', 'T'));
+                            } else if (typeof item.promotionEndDate === 'object') {
+                                if (item.promotionEndDate.$date) {
+                                    promotionEndDate = new Date(item.promotionEndDate.$date);
+                                } else if (typeof item.promotionEndDate === 'number') {
+                                    promotionEndDate = new Date(item.promotionEndDate);
+        }
+                            } else if (typeof item.promotionEndDate === 'number') {
+                                promotionEndDate = new Date(item.promotionEndDate);
+                            }
+                        } catch (e) {
+                            console.error("Erro ao converter promotionEndDate:", e, item.promotionEndDate);
+                        }
+                    }
+
+                    if (item.percentagePromotion) {
+                        promotionPercentage = typeof item.percentagePromotion === 'number' 
+                            ? item.percentagePromotion 
+                            : parseFloat(item.percentagePromotion);
+                    }
+                    
                     return (
-                        <StoreProductComponent 
+            <StoreProductComponent 
                             key={productId || `product-${index}`}
                             id={productId} 
                             name={item.name || "Produto sem nome"} 
                             price={item.price || 0}
                             coverImage={item.coverImage || undefined}
-                        />
+                            promotionPercentage={promotionPercentage}
+                            promotionStartDate={promotionStartDate}
+                            promotionEndDate={promotionEndDate}
+                />
                     );
                 })}
             </>

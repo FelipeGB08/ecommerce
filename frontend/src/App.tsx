@@ -7,8 +7,12 @@ import ProductDatailsScreen from './screens/productScreens/productDatailsScreen'
 import CreatePromotionScreen from './screens/productScreens/createPromotionScreen';
 import IncorrectUserType from './screens/errorScreens/incorrectUserType';
 // Importação da nova tela de carrinho
-import CartScreen from './screens/cartScreens/cartScreen';
-import MyProductsScreen from './screens/productScreens/myProductsScreen'; 
+import CartScreen from './screens/cartScreens/cartScreen'; 
+import MyProductsScreen from './screens/productScreens/myProductsScreen';
+import ProductPromotionScreen from './screens/productScreens/productPromotionScreen';
+import { ToastProvider } from './contexts/toastContext';
+import { CartProvider } from './contexts/cartContext';
+import ProtectedRoute from './components/ProtectedRoute'; 
 
 // Componente para redirecionar rotas antigas de produtos
 function RedirectProductDetails() {
@@ -18,7 +22,9 @@ function RedirectProductDetails() {
 
 export default function App() {
   return (
-    <Routes>
+    <ToastProvider>
+      <CartProvider>
+      <Routes>
       {/* Rotas principais */}
       <Route path="/" element={<LoginScreen />} />
       <Route path="/login" element={<LoginScreen />} />
@@ -30,9 +36,10 @@ export default function App() {
       
       {/* Rotas de produtos - novas (mais limpas) */}
       <Route path="/products/:productId" element={<ProductDatailsScreen />} />
-      <Route path="/products/create" element={<CreateProductScreen />} />
-      <Route path="/products/my-products" element={<MyProductsScreen />} />
-      <Route path="/promotions" element={<CreatePromotionScreen />} />
+      <Route path="/products/create" element={<ProtectedRoute><CreateProductScreen /></ProtectedRoute>} />
+      <Route path="/products/my-products" element={<ProtectedRoute><MyProductsScreen /></ProtectedRoute>} />
+      <Route path="/products/promotion/:productId" element={<ProtectedRoute><ProductPromotionScreen /></ProtectedRoute>} />
+      <Route path="/promotions" element={<ProtectedRoute><CreatePromotionScreen /></ProtectedRoute>} />
       
       {/* Rotas antigas (mantidas para compatibilidade) */}
       <Route path="/productdetails/:productId" element={<RedirectProductDetails />} />
@@ -46,5 +53,7 @@ export default function App() {
       {/* 404 - redireciona para login */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </CartProvider>
+    </ToastProvider>
   );
 }

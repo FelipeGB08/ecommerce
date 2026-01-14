@@ -20,7 +20,7 @@ export function SellerGetStoreProductsConnection({ body }: { body: Record<string
 
 export function AddProductPromotion({ body }: { body: Record<string, any> }) {
     return StandardFunction({
-        requestType: "GET",
+        requestType: "POST",
         route: "/storeRoute.php",
         whitchFunction: "addProductPromotion",
         body: body

@@ -125,3 +125,12 @@ export function GetSellerProductsConnection({ body }: { body: Record<string, any
         body: body
     });
 }
+
+export function GetSimilarProductsConnection({ body }: { body: Record<string, any> }) {
+    return StandardFunction({
+        requestType: "POST",
+        route: "/productRoute.php",
+        whitchFunction: "getSimilarProducts",
+        body: body
+    });
+}
