@@ -7,7 +7,7 @@ class ProductModel {
         $this->db = $db;
     }
 
-    function createProductModel($name, $price, $sellerId = null, $coverImage = null) {
+    function createProductModel($name, $price, $sellerId = null, $coverImage = null, $description = null, $category = null, $images = null, $tags = []) {
     
     $cleanPrice = str_replace(['R$', ' ', '.', ','], ['', '', '', '.'], $price);
     
@@ -30,6 +30,26 @@ class ProductModel {
     // Se houver imagem de capa, adiciona ao produto
     if ($coverImage) {
         $productData["coverImage"] = $coverImage;
+    }
+
+    // Se houver todas as imagens, adiciona ao produto como array
+    if ($images && is_array($images) && count($images) > 0) {
+        $productData["images"] = $images;
+    }
+
+    // Se houver descrição, adiciona ao produto
+    if ($description) {
+        $productData["description"] = $description;
+    }
+
+    // Se houver categoria, adiciona ao produto
+    if ($category) {
+        $productData["category"] = $category;
+    }
+
+    // Se houver tags, adiciona ao produto
+    if ($tags && is_array($tags) && count($tags) > 0) {
+        $productData["tags"] = $tags;
     }
 
     $response = $this->db->products->insertOne($productData);
@@ -83,12 +103,15 @@ class ProductModel {
     }
 
 
-    function addProductCartModel($userId, $productId){
+    function addProductCartModel($userId, $productId, $quantity = 1){
         try {
             $objProductId = new MongoDB\BSON\ObjectId($productId);
         } catch (Exception $e) {
             return false;
         }
+
+        // Garantir que quantity seja pelo menos 1
+        $quantity = max(1, (int)$quantity);
 
         // 1. Busca o produto para pegar o PREÇO
         $product = $this->db->products->findOne(["_id"=> $objProductId]);
@@ -105,7 +128,7 @@ class ProductModel {
             foreach ($products as &$p) {
                 if ($p['productId'] == $objProductId) {
                     // Se achou, aumenta a quantidade
-                    $p['quantity'] = ($p['quantity'] ?? 1) + 1;
+                    $p['quantity'] = ($p['quantity'] ?? 1) + $quantity;
                     $found = true;
                     break;
                 }
@@ -119,12 +142,13 @@ class ProductModel {
                 );
                 return true;
             } else {
-                // Se não achou, adiciona novo item com PREÇO e QUANTIDADE 1
+                // Se não achou, adiciona novo item com PREÇO, IMAGEM e QUANTIDADE informada
                 $newItem = [
                     "productId" => $objProductId,
                     "name" => $product['name'],
                     "price" => $product['price'], // Salvando o preço
-                    "quantity" => 1
+                    "coverImage" => $product['coverImage'] ?? null, // Salvando a imagem
+                    "quantity" => $quantity
                 ];
                 $this->db->cart->updateOne(
                     ["userId" => $userId],
@@ -141,7 +165,8 @@ class ProductModel {
                         "productId" => $objProductId, 
                         "name" => $product['name'],
                         "price" => $product['price'], 
-                        "quantity" => 1
+                        "coverImage" => $product['coverImage'] ?? null, // Salvando a imagem
+                        "quantity" => $quantity
                     ]
                 ]
             ]);
@@ -228,17 +253,40 @@ class ProductModel {
 
     function getStoreSearchedProductsModel($searchedWord){
         $products = $this->db->products->find([
-            "name" => new MongoDB\BSON\Regex($searchedWord, 'i')
+            '$or' => [
+                ["name" => new MongoDB\BSON\Regex($searchedWord, 'i')],
+                ["tags" => new MongoDB\BSON\Regex($searchedWord, 'i')]
+            ]
         ]);
         return $products->toArray();
     }
 
     function sellerGetStoreSearchedProductsModel($searchedWord){
         $products = $this->db->products->find([
-            "name" => new MongoDB\BSON\Regex($searchedWord, 'i')
+            '$or' => [
+                ["name" => new MongoDB\BSON\Regex($searchedWord, 'i')],
+                ["tags" => new MongoDB\BSON\Regex($searchedWord, 'i')]
+            ]
         ]);
         return $products->toArray();
     }//pegar somente os produtos do vendedor
+
+    function getSimilarProductsModel($category, $excludeProductId, $limit = 4) {
+        try {
+            $excludeId = new MongoDB\BSON\ObjectId($excludeProductId);
+            
+            $cursor = $this->db->products->find([
+                "category" => $category,
+                "_id" => ['$ne' => $excludeId]
+            ], [
+                "limit" => $limit
+            ]);
+            
+            return $cursor->toArray();
+        } catch (Exception $e) {
+            return [];
+        }
+    }
 
     function getUserCartModel($userId) {
         try {

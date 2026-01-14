@@ -27,14 +27,22 @@ class ProductController {
         $name = $body["name"] ?? "";
         $price = $body["price"] ?? "";
         $coverImage = $body["coverImage"] ?? null;
+        $description = $body["description"] ?? null;
+        $category = $body["category"] ?? null;
+        $images = $body["images"] ?? null;
+        $tags = $body["tags"] ?? [];
         $sellerId = $_SESSION["userId"] ?? null;
 
         if (!$name || !$price) {
             return ["ok" => false, "msg" => "Dados incompletos"];
         }
 
+        if (empty($tags) || count($tags) < 3) {
+            return ["ok" => false, "msg" => "É necessário adicionar pelo menos 3 tags"];
+        }
+
         $productModel = new ProductModel($this->db);
-        $productModel->createProductModel($name, $price, $sellerId, $coverImage);
+        $productModel->createProductModel($name, $price, $sellerId, $coverImage, $description, $category, $images, $tags);
 
         return [
             "ok" => true,
@@ -136,7 +144,30 @@ class ProductController {
         $productModel = new ProductModel($this->db);
         $products = $productModel->getSellerProductsModel($sellerId);
 
-        return ["ok" => true, "msg" => $products];
+        // Converter datas UTCDateTime para formato legível
+        $processedProducts = [];
+        foreach ($products as $product) {
+            $processedProduct = $product;
+            
+            // Converter _id para string se necessário
+            if (isset($product['_id']) && is_object($product['_id'])) {
+                $processedProduct['_id'] = (string)$product['_id'];
+            }
+            
+            // Converter promotionStartDate
+            if (isset($product['promotionStartDate']) && $product['promotionStartDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                $processedProduct['promotionStartDate'] = $product['promotionStartDate']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            // Converter promotionEndDate
+            if (isset($product['promotionEndDate']) && $product['promotionEndDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                $processedProduct['promotionEndDate'] = $product['promotionEndDate']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            $processedProducts[] = $processedProduct;
+        }
+
+        return ["ok" => true, "msg" => $processedProducts];
     }
 
     function addProductCartController() {
@@ -150,9 +181,10 @@ class ProductController {
         }
 
         $productId = $body["productId"] ?? "";
+        $quantity = isset($body["quantity"]) ? (int)$body["quantity"] : 1;
 
         $productModel = new ProductModel($this->db);
-        $ok = $productModel->addProductCartModel($userId, $productId);
+        $ok = $productModel->addProductCartModel($userId, $productId, $quantity);
         
         if ($ok) {
             return [
@@ -207,12 +239,47 @@ class ProductController {
         $productDetails = $productModel->getProductDetailsModel($productId);
         
         if ($productDetails) {
+            // Converter _id para string
+            $productIdStr = (string)$productDetails["_id"];
+            
+            // Converter array de imagens se existir
+            $imagesArray = [];
+            if (isset($productDetails["images"])) {
+                if (is_array($productDetails["images"])) {
+                    $imagesArray = $productDetails["images"];
+                } elseif ($productDetails["images"] instanceof MongoDB\Model\BSONArray) {
+                    $imagesArray = iterator_to_array($productDetails["images"]);
+                }
+            }
+            
+            $result = [
+                "_id" => $productIdStr,
+                "name" => $productDetails["name"],
+                "price" => $productDetails["price"] ?? 0,
+                "description" => $productDetails["description"] ?? "",
+                "category" => $productDetails["category"] ?? "",
+                "coverImage" => $productDetails["coverImage"] ?? null,
+                "images" => $imagesArray
+            ];
+            
+            // Adicionar dados de promoção se existirem
+            if (isset($productDetails["percentagePromotion"])) {
+                $result["percentagePromotion"] = $productDetails["percentagePromotion"];
+            }
+            
+            // Converter promotionStartDate
+            if (isset($productDetails["promotionStartDate"]) && $productDetails["promotionStartDate"] instanceof MongoDB\BSON\UTCDateTime) {
+                $result["promotionStartDate"] = $productDetails["promotionStartDate"]->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            // Converter promotionEndDate
+            if (isset($productDetails["promotionEndDate"]) && $productDetails["promotionEndDate"] instanceof MongoDB\BSON\UTCDateTime) {
+                $result["promotionEndDate"] = $productDetails["promotionEndDate"]->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
             return [
                 "ok" => true,
-                "msg" => [
-                    "name" => $productDetails["name"],
-                    "price" => $productDetails["price"] ?? 0
-                ]
+                "msg" => $result
             ];
         }
 
@@ -235,6 +302,46 @@ class ProductController {
         ];
     }
 
+    function getSimilarProductsController() {
+        $req = json_decode(file_get_contents("php://input"), true);
+        $body = $req["body"] ?? null;
+
+        $productId = $body["productId"] ?? "";
+        $category = $body["category"] ?? "";
+
+        if (!$productId || !$category) {
+            return ["ok" => false, "msg" => "ID do produto ou categoria não fornecidos"];
+        }
+
+        $productModel = new ProductModel($this->db);
+        $similarProducts = $productModel->getSimilarProductsModel($category, $productId, 4);
+
+        // Converter datas UTCDateTime para formato legível
+        $processedProducts = [];
+        foreach ($similarProducts as $product) {
+            $processedProduct = $product;
+            
+            // Converter _id para string se necessário
+            if (isset($product['_id']) && is_object($product['_id'])) {
+                $processedProduct['_id'] = (string)$product['_id'];
+            }
+            
+            // Converter promotionStartDate
+            if (isset($product['promotionStartDate']) && $product['promotionStartDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                $processedProduct['promotionStartDate'] = $product['promotionStartDate']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            // Converter promotionEndDate
+            if (isset($product['promotionEndDate']) && $product['promotionEndDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                $processedProduct['promotionEndDate'] = $product['promotionEndDate']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            $processedProducts[] = $processedProduct;
+        }
+
+        return ["ok" => true, "msg" => $processedProducts];
+    }
+
     function getStoreSearchedProductsController(){
         $req = json_decode(file_get_contents("php://input"), true);
         $body = $req["body"] ?? null;
@@ -245,9 +352,32 @@ class ProductController {
         
         $products = $productModel->getStoreSearchedProductsModel($searchedWord);
         
+        // Converter datas UTCDateTime para formato legível
+        $processedProducts = [];
+        foreach ($products as $product) {
+            $processedProduct = $product;
+            
+            // Converter _id para string se necessário
+            if (isset($product['_id']) && is_object($product['_id'])) {
+                $processedProduct['_id'] = (string)$product['_id'];
+            }
+            
+            // Converter promotionStartDate
+            if (isset($product['promotionStartDate']) && $product['promotionStartDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                $processedProduct['promotionStartDate'] = $product['promotionStartDate']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            // Converter promotionEndDate
+            if (isset($product['promotionEndDate']) && $product['promotionEndDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                $processedProduct['promotionEndDate'] = $product['promotionEndDate']->toDateTime()->format('Y-m-d H:i:s');
+            }
+            
+            $processedProducts[] = $processedProduct;
+        }
+        
         return [
             "ok" => true,
-            "msg" => $products
+            "msg" => $processedProducts
         ];
     }
 
@@ -306,7 +436,46 @@ class ProductController {
         // A busca no banco continua igual
         $cart = $productModel->getUserCartModel($userId);
         
-        return ["ok" => true, "msg" => $cart];
+        // Buscar dados de promoção para cada produto no carrinho
+        $cartWithPromotions = [];
+        foreach ($cart as $item) {
+            $cartItem = $item;
+            
+            // Obter productId
+            $productId = $item['productId'];
+            if (is_object($productId)) {
+                $productIdObj = $productId;
+            } else {
+                try {
+                    $productIdObj = new MongoDB\BSON\ObjectId($productId);
+                } catch (Exception $e) {
+                    $cartWithPromotions[] = $cartItem;
+                    continue;
+                }
+            }
+            
+            // Buscar dados do produto (incluindo promoções)
+            $product = $this->db->products->findOne(["_id" => $productIdObj]);
+            
+            if ($product) {
+                // Adicionar dados de promoção se existirem
+                if (isset($product['percentagePromotion'])) {
+                    $cartItem['percentagePromotion'] = $product['percentagePromotion'];
+                }
+                
+                if (isset($product['promotionStartDate']) && $product['promotionStartDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                    $cartItem['promotionStartDate'] = $product['promotionStartDate']->toDateTime()->format('Y-m-d H:i:s');
+                }
+                
+                if (isset($product['promotionEndDate']) && $product['promotionEndDate'] instanceof MongoDB\BSON\UTCDateTime) {
+                    $cartItem['promotionEndDate'] = $product['promotionEndDate']->toDateTime()->format('Y-m-d H:i:s');
+                }
+            }
+            
+            $cartWithPromotions[] = $cartItem;
+        }
+        
+        return ["ok" => true, "msg" => $cartWithPromotions];
     }
 
 // Função para criar o pedido e gerar o pagamento

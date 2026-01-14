@@ -43,6 +43,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             echo json_encode($productController->getProductCommentsController());
             break;
 
+        case 'getSimilarProducts':
+            echo json_encode($productController->getSimilarProductsController());
+            break;
+
         case 'getStoreSearchedProducts':
             echo json_encode($productController->getStoreSearchedProductsController());
             break;
