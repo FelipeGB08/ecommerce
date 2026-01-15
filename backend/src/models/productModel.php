@@ -9,7 +9,10 @@ class ProductModel {
 
     function createProductModel($name, $price, $sellerId = null, $coverImage = null, $description = null, $category = null, $images = null, $tags = []) {
     
-    $cleanPrice = str_replace(['R$', ' ', '.', ','], ['', '', '', '.'], $price);
+    // Limpar preço: remover R$, espaços e converter vírgula para ponto
+    $cleanPrice = str_replace(['R$', ' '], '', $price);
+    // Substituir vírgula por ponto (se vier como "854,99")
+    $cleanPrice = str_replace(',', '.', $cleanPrice);
     
     if (!is_numeric($cleanPrice)) {
         throw new InvalidArgumentException("O preço deve ser um valor numérico.");
@@ -61,7 +64,10 @@ class ProductModel {
         try {
             $id = new MongoDB\BSON\ObjectId($productId);
             
-            $cleanPrice = str_replace(['R$', ' ', '.', ','], ['', '', '', '.'], $price);
+            // Limpar preço: remover R$, espaços e converter vírgula para ponto
+            $cleanPrice = str_replace(['R$', ' '], '', $price);
+            // Substituir vírgula por ponto (se vier como "854,99")
+            $cleanPrice = str_replace(',', '.', $cleanPrice);
             if (!is_numeric($cleanPrice)) {
                 return false;
             }

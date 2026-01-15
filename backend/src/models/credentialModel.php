@@ -11,20 +11,30 @@ class CredentialModel {
         $this->db = $db;
     }
 
-    function signupModel($name, $password, $role) {
+    function signupModel($email, $password, $role) {
+        // Verificar se email já existe
+        $existingUser = $this->db->users->findOne(["email" => $email]);
+        if ($existingUser) {
+            return false; // Email já registrado
+        }
+
         $hashed = password_hash($password, PASSWORD_DEFAULT);
 
-        $response = $this->db->users->insertOne([
-            "name"=> $name,
-            "password"=> $hashed, 
-            "role"=> $role,
-        ]);
-
-        return $response->getInsertedId();
+        try {
+            $response = $this->db->users->insertOne([
+                "email"=> $email,
+                "password"=> $hashed, 
+                "role"=> $role,
+            ]);
+            return $response->getInsertedId();
+        } catch (Exception $e) {
+            // Se houver erro de índice único (email duplicado)
+            return false;
+        }
     }
 
-    function loginModel($name, $password) {
-    $user = $this->db->users->findOne(["name" => $name]);
+    function loginModel($email, $password) {
+    $user = $this->db->users->findOne(["email" => $email]);
     if (!$user) {
         return false;
     }
@@ -32,7 +42,7 @@ class CredentialModel {
     if (password_verify($password, $user["password"])) {
         $_SESSION["userId"] = (string) $user["_id"];
         $_SESSION["role"] = (string) ($user["role"] ?? "customer");
-        $_SESSION["name"] = (string) ($user["name"] ?? $name);
+        $_SESSION["email"] = (string) ($user["email"] ?? $email);
         
         return true;
     }

@@ -93,11 +93,11 @@ class StoreController {
         $body = $req["body"] ?? null;
 
         $productId = $body["productId"] ?? "";
-        $percentagePromotion = $body["percentagePromotion"] ?? "";
+        $promotionalPrice = $body["promotionalPrice"] ?? "";
         $startDate = $body["startDate"] ?? "";
         $endDate = $body["endDate"] ?? "";
 
-        if (!$productId || !$percentagePromotion || !$startDate || !$endDate) {
+        if (!$productId || !$promotionalPrice || !$startDate || !$endDate) {
             return [
                 "ok" => false,
                 "msg" => "Dados incompletos"
@@ -123,7 +123,7 @@ class StoreController {
         }
 
         $storeModel = new StoreModel($this->db);
-        $success = $storeModel->addProductPromotionModel($productId, $percentagePromotion, $startDate, $endDate);
+        $success = $storeModel->addProductPromotionModel($productId, $promotionalPrice, $startDate, $endDate);
 
         if ($success) {
         return [
