@@ -58,6 +58,11 @@ class ProductController {
         $productId = $body["productId"] ?? "";
         $name = $body["name"] ?? "";
         $price = $body["price"] ?? "";
+        $description = $body["description"] ?? null;
+        $category = $body["category"] ?? null;
+        $images = $body["images"] ?? null;
+        $coverImage = $body["coverImage"] ?? null;
+        $tags = $body["tags"] ?? null;
         $sellerId = $_SESSION["userId"] ?? null;
 
         if (!$productId || !$name || !$price) {
@@ -84,7 +89,7 @@ class ProductController {
         }
 
         $productModel = new ProductModel($this->db);
-        $ok = $productModel->updateProductModel($productId, $name, $price);
+        $ok = $productModel->updateProductModel($productId, $name, $price, $description, $category, $images, $coverImage, $tags);
 
         if ($ok) {
             return ["ok" => true, "msg" => "Produto atualizado com sucesso"];

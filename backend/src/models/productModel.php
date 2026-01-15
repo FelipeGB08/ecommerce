@@ -60,7 +60,7 @@ class ProductModel {
     return $response;
 }
 
-    function updateProductModel($productId, $name, $price) {
+    function updateProductModel($productId, $name, $price, $description = null, $category = null, $images = null, $coverImage = null, $tags = null) {
         try {
             $id = new MongoDB\BSON\ObjectId($productId);
             
@@ -73,12 +73,31 @@ class ProductModel {
             }
             $floatPrice = (float) $cleanPrice;
 
+            $updateData = [
+                "name" => $name,
+                "price" => $floatPrice
+            ];
+            
+            // Adicionar campos opcionais se fornecidos
+            if ($description !== null) {
+                $updateData["description"] = $description;
+            }
+            if ($category !== null) {
+                $updateData["category"] = $category;
+            }
+            if ($images !== null && is_array($images)) {
+                $updateData["images"] = $images;
+            }
+            if ($coverImage !== null) {
+                $updateData["coverImage"] = $coverImage;
+            }
+            if ($tags !== null && is_array($tags)) {
+                $updateData["tags"] = $tags;
+            }
+
             $result = $this->db->products->updateOne(
                 ["_id" => $id],
-                ['$set' => [
-                    "name" => $name,
-                    "price" => $floatPrice
-                ]]
+                ['$set' => $updateData]
             );
             
             return $result->getModifiedCount() > 0;

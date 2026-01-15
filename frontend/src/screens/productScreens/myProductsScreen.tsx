@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { GetSellerProductsConnection, UpdateProductConnection, DeleteProductConnection } from "../../connections/productConnection";
-import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, X, Tag } from "lucide-react";
+import { Plus, Edit2, Trash2, CheckCircle2, AlertCircle, X, Tag, ShoppingBag, Upload, Trash } from "lucide-react";
 import Navbar from "../../components/Navbar";
 
 export default function MyProductsScreen() {
@@ -10,6 +10,11 @@ export default function MyProductsScreen() {
     const [editingProduct, setEditingProduct] = useState<string | null>(null);
     const [editName, setEditName] = useState("");
     const [editPrice, setEditPrice] = useState("");
+    const [editDescription, setEditDescription] = useState("");
+    const [editCategory, setEditCategory] = useState("");
+    const [editTags, setEditTags] = useState("");
+    const [editImages, setEditImages] = useState<string[]>([]);
+    const [editCoverImage, setEditCoverImage] = useState("");
     const [showSuccess, setShowSuccess] = useState(false);
     const [showError, setShowError] = useState(false);
     const [message, setMessage] = useState("");
@@ -40,6 +45,11 @@ export default function MyProductsScreen() {
         setEditingProduct(productId);
         setEditName(product.name || "");
         setEditPrice(product.price?.toString().replace(".", ",") || "");
+        setEditDescription(product.description || "");
+        setEditCategory(product.category || "");
+        setEditTags((product.tags || []).join(", "));
+        setEditImages(product.images || []);
+        setEditCoverImage(product.coverImage || "");
     }
 
     // Cancelar edição
@@ -47,6 +57,31 @@ export default function MyProductsScreen() {
         setEditingProduct(null);
         setEditName("");
         setEditPrice("");
+        setEditDescription("");
+        setEditCategory("");
+        setEditTags("");
+        setEditImages([]);
+        setEditCoverImage("");
+    }
+
+    // Handle upload de imagens
+    function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const files = e.target.files;
+        if (!files) return;
+
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const dataUrl = event.target?.result as string;
+                setEditImages(prev => [...prev, dataUrl]);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Remover imagem
+    function removeImage(index: number) {
+        setEditImages(prev => prev.filter((_, i) => i !== index));
     }
 
     // Salvar edição
@@ -58,12 +93,26 @@ export default function MyProductsScreen() {
             return;
         }
 
+        // Validar tags
+        const tagsArray = editTags.trim() ? editTags.split(",").map(tag => tag.trim()).filter(tag => tag) : [];
+        if (tagsArray.length < 3) {
+            setMessage("Adicione pelo menos 3 tags separadas por vírgula.");
+            setShowError(true);
+            setTimeout(() => setShowError(false), 3000);
+            return;
+        }
+
         try {
             const res = await UpdateProductConnection({
                 body: {
                     productId: productId,
                     name: editName,
-                    price: editPrice
+                    price: editPrice,
+                    description: editDescription,
+                    category: editCategory,
+                    tags: tagsArray,
+                    images: editImages,
+                    coverImage: editCoverImage
                 }
             });
 
@@ -143,6 +192,148 @@ export default function MyProductsScreen() {
                 </div>
             </div>
 
+            {/* Modal de Edição */}
+            {editingProduct && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-gray-900">Editar Produto</h2>
+                            <button onClick={cancelEdit} className="text-gray-500 hover:text-gray-700">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 space-y-4">
+                            {/* Nome */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Produto *</label>
+                                <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    placeholder="Nome do produto"
+                                />
+                            </div>
+
+                            {/* Preço */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Preço *</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">R$</span>
+                                    <input
+                                        type="text"
+                                        value={editPrice}
+                                        onChange={(e) => {
+                                            const value = e.target.value.replace(/[^\d,]/g, "");
+                                            setEditPrice(value);
+                                        }}
+                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        placeholder="0,00"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Descrição */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
+                                <textarea
+                                    value={editDescription}
+                                    onChange={(e) => setEditDescription(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    placeholder="Descrição do produto"
+                                    rows={3}
+                                />
+                            </div>
+
+                            {/* Categoria */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+                                <input
+                                    type="text"
+                                    value={editCategory}
+                                    onChange={(e) => setEditCategory(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    placeholder="Ex: Eletrônicos, Roupas, etc"
+                                />
+                            </div>
+
+                            {/* Tags */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Tags * (mínimo 3, separadas por vírgula)</label>
+                                <input
+                                    type="text"
+                                    value={editTags}
+                                    onChange={(e) => setEditTags(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    placeholder="Ex: eletrônico, qualidade, novo"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Separe cada tag com vírgula</p>
+                            </div>
+
+                            {/* Imagens */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-3">Imagens do Produto</label>
+                                
+                                {/* Galeria de imagens existentes */}
+                                {editImages.length > 0 && (
+                                    <div className="mb-4">
+                                        <p className="text-xs text-gray-600 mb-2">Imagens atuais ({editImages.length})</p>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            {editImages.map((image, index) => (
+                                                <div key={index} className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-200 group">
+                                                    <img 
+                                                        src={image} 
+                                                        alt={`Imagem ${index + 1}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <button
+                                                        onClick={() => removeImage(index)}
+                                                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                                    >
+                                                        <Trash className="w-5 h-5 text-white" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Upload de novas imagens */}
+                                <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                    />
+                                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                    <p className="text-sm font-medium text-gray-700">Clique ou arraste imagens aqui</p>
+                                    <p className="text-xs text-gray-500 mt-1">PNG, JPG ou GIF até 10MB</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Botões */}
+                        <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3 justify-end">
+                            <button
+                                onClick={cancelEdit}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => saveEdit(editingProduct)}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                            >
+                                Salvar Alterações
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Conteúdo Principal */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex items-center justify-between mb-6">
@@ -200,68 +391,29 @@ export default function MyProductsScreen() {
 
                                     {/* Informações do Produto */}
                                     <div className="p-4 flex flex-col flex-1">
-                                        {isEditing ? (
-                                            <>
-                                                <input
-                                                    type="text"
-                                                    value={editName}
-                                                    onChange={(e) => setEditName(e.target.value)}
-                                                    className="w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-medium"
-                                                    placeholder="Nome do produto"
-                                                />
-                                                <div className="relative mb-4">
-                                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">R$</span>
-                                                    <input
-                                                        type="text"
-                                                        value={editPrice}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value.replace(/[^\d,]/g, "");
-                                                            setEditPrice(value);
-                                                        }}
-                                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                                                        placeholder="0,00"
-                                                    />
-                                                </div>
-                                                <div className="flex gap-2 mt-auto">
-                                                    <button
-                                                        onClick={() => saveEdit(productId)}
-                                                        className="flex-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                                                    >
-                                                        Salvar
-                                                    </button>
-                                                    <button
-                                                        onClick={cancelEdit}
-                                                        className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
-                                                    >
-                                                        Cancelar
-                                                    </button>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem]">
-                                                    {product.name || "Produto sem nome"}
-                                                </h3>
-                                                {(() => {
-                                                    // Verificar se há promoção ativa
-                                                    const hasPromotion = product.percentagePromotion && product.percentagePromotion > 0;
-                                                    let isPromotionActive = false;
-                                                    let promotionPrice = product.price || 0;
+                                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem]">
+                                            {product.name || "Produto sem nome"}
+                                        </h3>
+                                        {(() => {
+                                            // Verificar se há promoção ativa
+                                            const hasPromotion = product.promotionalPrice && product.promotionalPrice > 0;
+                                            let isPromotionActive = false;
+                                            let promotionPrice = product.price || 0;
+                                            
+                                            if (hasPromotion && product.promotionStartDate && product.promotionEndDate) {
+                                                try {
+                                                    const now = new Date();
+                                                    const start = new Date(product.promotionStartDate.replace(' ', 'T'));
+                                                    const end = new Date(product.promotionEndDate.replace(' ', 'T'));
+                                                    isPromotionActive = now >= start && now <= end;
                                                     
-                                                    if (hasPromotion && product.promotionStartDate && product.promotionEndDate) {
-                                                        try {
-                                                            const now = new Date();
-                                                            const start = new Date(product.promotionStartDate.replace(' ', 'T'));
-                                                            const end = new Date(product.promotionEndDate.replace(' ', 'T'));
-                                                            isPromotionActive = now >= start && now <= end;
-                                                            
-                                                            if (isPromotionActive) {
-                                                                promotionPrice = product.price * (1 - product.percentagePromotion / 100);
-                                                            }
-                                                        } catch (e) {
-                                                            console.error("Erro ao verificar promoção:", e);
-                                                        }
+                                                    if (isPromotionActive) {
+                                                        promotionPrice = product.promotionalPrice;
                                                     }
+                                                } catch (e) {
+                                                    console.error("Erro ao verificar promoção:", e);
+                                                }
+                                            }
                                                     
                                                     return (
                                                         <div className="mb-4">
@@ -291,32 +443,30 @@ export default function MyProductsScreen() {
                                                         </div>
                                                     );
                                                 })()}
-                                                <div className="flex gap-2 mt-auto">
-                                                    <button
-                                                        onClick={() => navigate(`/products/promotion/${productId}`)}
-                                                        className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 border border-purple-300 rounded-md text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
-                                                        title="Adicionar promoção"
-                                                    >
-                                                        <Tag className="w-4 h-4" />
-                                                        Promoção
-                                                    </button>
-                                                    <button
-                                                        onClick={() => startEdit(product)}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                                        title="Editar produto"
-                                                    >
-                                                        <Edit2 className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(productId, product.name || "Produto")}
-                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                                        title="Excluir produto"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
+                                        <div className="flex gap-2 mt-auto">
+                                            <button
+                                                onClick={() => navigate(`/products/promotion/${productId}`)}
+                                                className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 border border-purple-300 rounded-md text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors"
+                                                title="Adicionar promoção"
+                                            >
+                                                <Tag className="w-4 h-4" />
+                                                Promoção
+                                            </button>
+                                            <button
+                                                onClick={() => startEdit(product)}
+                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                                title="Editar produto"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(productId, product.name || "Produto")}
+                                                className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                title="Excluir produto"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             );
