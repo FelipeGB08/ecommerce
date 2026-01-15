@@ -16,13 +16,17 @@ class StoreModel {
         return $response->toArray();
     }//pegar somente os produtos que sejam desse vendedor
 
-    function addProductPromotionModel($productId, $percentage){
+    function addProductPromotionModel($productId, $promotionalPrice, $startDate, $endDate){
         try {
             $id = new MongoDB\BSON\ObjectId($productId);
             
             $result = $this->db->products->updateOne(
                 ["_id" => $id],
-                ['$set' => ["percentagePromotion" => (int)$percentage]]
+                ['$set' => [
+                    "promotionalPrice" => (float)$promotionalPrice,
+                    "promotionStartDate" => new MongoDB\BSON\UTCDateTime(strtotime($startDate) * 1000),
+                    "promotionEndDate" => new MongoDB\BSON\UTCDateTime(strtotime($endDate) * 1000)
+                ]]
             );
             
             return $result->getModifiedCount() > 0 || $result->getMatchedCount() > 0;
@@ -37,7 +41,11 @@ class StoreModel {
             
             $result = $this->db->products->updateOne(
                 ["_id" => $id],
-                ['$unset' => ["percentagePromotion" => ""]]
+                ['$unset' => [
+                    "promotionalPrice" => "",
+                    "promotionStartDate" => "",
+                    "promotionEndDate" => ""
+                ]]
             );
             
             return $result->getModifiedCount() > 0;

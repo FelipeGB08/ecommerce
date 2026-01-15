@@ -263,8 +263,8 @@ class ProductController {
             ];
             
             // Adicionar dados de promoção se existirem
-            if (isset($productDetails["percentagePromotion"])) {
-                $result["percentagePromotion"] = $productDetails["percentagePromotion"];
+            if (isset($productDetails["promotionalPrice"])) {
+                $result["promotionalPrice"] = $productDetails["promotionalPrice"];
             }
             
             // Converter promotionStartDate
