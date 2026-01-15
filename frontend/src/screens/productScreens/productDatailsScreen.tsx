@@ -231,9 +231,10 @@ export default function ProductDatailsScreen() {
               <div className="mb-6">
                 {(() => {
                   // Verificar se há promoção ativa
-                  const hasPromotion = details.percentagePromotion && details.percentagePromotion > 0;
+                  const hasPromotion = details.promotionalPrice && details.promotionalPrice > 0;
                   let isPromotionActive = false;
                   let promotionPrice = details.price || 0;
+                  let discountPercentage = 0;
                   
                   if (hasPromotion && details.promotionStartDate && details.promotionEndDate) {
                     try {
@@ -243,7 +244,8 @@ export default function ProductDatailsScreen() {
                       isPromotionActive = now >= start && now <= end;
                       
                       if (isPromotionActive) {
-                        promotionPrice = details.price * (1 - details.percentagePromotion / 100);
+                        promotionPrice = details.promotionalPrice;
+                        discountPercentage = Math.round(((details.price - promotionPrice) / details.price) * 100);
                       }
                     } catch (e) {
                       console.error("Erro ao verificar promoção:", e);
@@ -267,7 +269,7 @@ export default function ProductDatailsScreen() {
                             })}
                           </p>
                           <span className="px-3 py-1 bg-red-600 text-white text-sm font-bold rounded-md">
-                            {Math.round(details.percentagePromotion)}% OFF
+                            {discountPercentage}% OFF
                           </span>
                         </div>
                       ) : (

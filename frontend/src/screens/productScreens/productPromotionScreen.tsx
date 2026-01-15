@@ -108,6 +108,9 @@ export default function ProductPromotionScreen() {
             const discount = parseFloat(discountValue.replace(",", ".")) || 0;
             const percentage = discountType === "percentage" ? discount : (discount / (product.price || 1)) * 100;
             
+            // Calcular o preço final com desconto aplicado
+            const finalPrice = product.price * (1 - (percentage / 100));
+            
             // Combinar data e hora
             const startDateTime = `${startDate} ${startTime}:00`;
             const endDateTime = `${endDate} ${endTime}:00`;
@@ -115,7 +118,7 @@ export default function ProductPromotionScreen() {
             const res = await AddProductPromotion({
                 body: {
                     productId: productId,
-                    percentagePromotion: Math.round(percentage * 100) / 100,
+                    promotionalPrice: Math.round(finalPrice * 100) / 100,
                     startDate: startDateTime,
                     endDate: endDateTime
                 }
