@@ -136,10 +136,6 @@ export function StoreProductComponent(
             {name}
           </h3>
           
-          <p className="text-sm text-gray-500 mb-3 line-clamp-2 flex-1">
-            Produto de qualidade premium
-          </p>
-
           {/* Avaliação (placeholder) */}
           <div className="flex items-center gap-1 mb-3">
             <div className="flex">

@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { SignupConnection } from "../../connections/credentialConnections";
-import { ShoppingBag, Store, Eye, EyeOff, Mail, CheckCircle2 } from "lucide-react";
+import { ShoppingBag, Store, Eye, EyeOff, Mail, CheckCircle2, AlertCircle } from "lucide-react";
 
 export default function SignupScreen() {
-    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -14,6 +13,7 @@ export default function SignupScreen() {
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [passwordError, setPasswordError] = useState("");
     const [showSuccess, setShowSuccess] = useState(false);
+    const [serverError, setServerError] = useState("");
     const navigate = useNavigate();
 
     // Função para validar senha
@@ -32,6 +32,7 @@ export default function SignupScreen() {
         
         // Limpar erros anteriores
         setPasswordError("");
+        setServerError("");
         
         // Validação de senha
         const passwordValidation = validatePassword(password);
@@ -47,15 +48,15 @@ export default function SignupScreen() {
         }
         
         if (!agreedToTerms) {
-            alert("Você precisa concordar com os Termos de Serviço e Política de Privacidade!");
+            setServerError("Você precisa concordar com os Termos de Serviço e Política de Privacidade!");
             return;
         }
 
-        // O backend espera { name, password, seller: "seller" } para vendedor
-        // ou apenas { name, password } para cliente (usa "customer" como padrão)
+        // O backend espera { email, password, seller: "seller" } para vendedor
+        // ou apenas { email, password } para cliente (usa "customer" como padrão)
         const body = role === "seller" 
-            ? { name, password, seller: "seller" }
-            : { name, password };
+            ? { email, password, seller: "seller" }
+            : { email, password };
         
         const res = await SignupConnection({ body });
         
@@ -67,9 +68,8 @@ export default function SignupScreen() {
                 navigate("/login");
             }, 2000);
         } else {
-            // Mantém o comportamento atual se houver erro
-            console.log("Erro no cadastro");
-            alert("Erro ao criar conta. Tente novamente.");
+            // Mostrar erro bonito
+            setServerError(res?.msg || "Erro ao criar conta. Tente novamente.");
         }
     }
 
@@ -100,6 +100,17 @@ export default function SignupScreen() {
                         <div>
                             <p className="text-green-800 font-medium">Registro realizado com sucesso!</p>
                             <p className="text-green-600 text-sm">Redirecionando para o login...</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Mensagem de Erro */}
+                {serverError && (
+                    <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+                        <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                        <div>
+                            <p className="text-red-800 font-medium">Erro ao registrar</p>
+                            <p className="text-red-600 text-sm">{serverError}</p>
                         </div>
                     </div>
                 )}
@@ -149,24 +160,8 @@ export default function SignupScreen() {
 
                         {/* Grid de campos lado a lado */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Campo Nome Completo */}
-                            <div>
-                                <label htmlFor="name" className="block text-xs font-medium text-gray-700 mb-1">
-                                    Nome Completo
-                                </label>
-                                <input
-                                    id="name"
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="Digite seu nome"
-                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                                    required
-                                />
-                            </div>
-
                             {/* Campo Email */}
-                            <div>
+                            <div className="md:col-span-2">
                                 <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
                                     Email
                                 </label>
@@ -178,6 +173,7 @@ export default function SignupScreen() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         placeholder="nome@empresa.com"
                                         className="w-full px-3 py-2 pl-9 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                                        required
                                     />
                                     <Mail className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                 </div>
@@ -289,42 +285,6 @@ export default function SignupScreen() {
                             Criar conta
                         </button>
                     </form>
-
-                    {/* Separador */}
-                    <div className="relative my-4">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-300"></div>
-                        </div>
-                        <div className="relative flex justify-center text-xs">
-                            <span className="px-2 bg-white text-gray-500">Ou continue com</span>
-                        </div>
-                    </div>
-
-                    {/* Botão Google */}
-                    <button
-                        type="button"
-                        className="w-full flex items-center justify-center gap-2 border border-gray-300 bg-white text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300 transition text-sm"
-                    >
-                        <svg className="w-4 h-4" viewBox="0 0 24 24">
-                            <path
-                                fill="#4285F4"
-                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                            />
-                            <path
-                                fill="#34A853"
-                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                            />
-                            <path
-                                fill="#FBBC05"
-                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                            />
-                            <path
-                                fill="#EA4335"
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                            />
-                        </svg>
-                        Cadastre-se com Google
-                    </button>
                 </div>
             </div>
         </main>
